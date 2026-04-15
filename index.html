@@ -39,7 +39,7 @@ select:focus,input:focus{outline:none;border-color:#4361ee;box-shadow:0 0 0 4px 
 .pos-low{background:linear-gradient(90deg,#ff6b6b,#ff8787);}
 .pos-mid{background:linear-gradient(90deg,#ffd43b,#ffe066);}
 .pos-high{background:linear-gradient(90deg,#51cf66,#69db7c);}
-.pos-marker-row{position:relative;height:46px;margin-top:6px;overflow:visible;}
+.pos-marker-row{position:relative;height:28px;margin-top:4px;overflow:visible;}
 .range-marker{position:absolute;top:0;transform:translateX(-50%);transition:left .35s cubic-bezier(.4,0,.2,1),transform .35s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;align-items:center;pointer-events:none;z-index:2;}
 .range-marker-label{font-size:10px;font-weight:800;line-height:1.2;white-space:nowrap;background:#fff;border:1px solid #e1e8f4;border-radius:999px;padding:5px 9px;box-shadow:0 6px 14px rgba(31,42,68,.08);margin-bottom:6px;}
 .range-marker-bar{width:8px;height:24px;border-radius:999px;box-shadow:0 0 0 2px #fff,0 4px 10px rgba(31,42,68,.14);}
@@ -238,7 +238,19 @@ select:focus,input:focus{outline:none;border-color:#4361ee;box-shadow:0 0 0 4px 
 .pdf-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 18px;border:none;border-radius:14px;background:linear-gradient(135deg,#4361ee 0%,#5a76f2 100%);color:#fff;font-weight:700;font-size:13px;cursor:pointer;margin:0 0 16px auto;box-shadow:0 10px 22px rgba(67,97,238,.22);}
 .pdf-btn:hover{filter:brightness(.98);transform:translateY(-1px);}
 
-@media print{.tabs,.emp-add-btn,.emp-del,.pdf-btn{display:none!important;}.panel{display:block!important;}body{padding:0;}}
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+  .tabs,.emp-add-btn,.emp-del,.pdf-btn,#raise-row,.raise-result-box,.pos-track-wrap,.pos-legend,.advice,#vchart-wrap,#raise-vchart-wrap{display:none!important;}
+  .panel{display:block!important;}
+  body{padding:0;font-size:11px;background:#fff!important;}
+  .container{max-width:100%;}
+  .card,.report-section{break-inside:avoid;page-break-inside:avoid;border:1px solid #e0e0e0!important;box-shadow:none!important;margin-bottom:10px;}
+  .report-header{background:#1a1a2e!important;color:#fff!important;-webkit-print-color-adjust:exact;}
+  .report-kpi-grid{grid-template-columns:repeat(4,1fr)!important;}
+  .report-2col{grid-template-columns:1fr 1fr!important;}
+  h1{font-size:18px!important;}
+  svg{max-width:100%;}
+}
 @media(max-width:680px){
   .attrition-layout{grid-template-columns:1fr;}
   .attr-chart-side{position:static;}
@@ -379,29 +391,15 @@ select:focus,input:focus{outline:none;border-color:#4361ee;box-shadow:0 0 0 4px 
   <!-- ② 4대보험 계산 -->
   <div class="panel" id="t1">
     <div class="card">
-      <div class="card-title">4대보험 적용 설정 <span class="badge badge-purple">일반 근로자 기본 적용 + 예외 대상 개별 선택</span></div>
-      <div class="section-note">기본값은 일반 근로자 기준으로 4대보험 전체 적용입니다. 예외 대상을 체크하면 아래에서 실제 적용할 보험 항목만 직접 선택할 수 있습니다.</div>
-      <div class="metric-grid metric-grid-2" style="margin-bottom:12px;">
-        <div class="metric blue"><div class="ml">기본 적용 기준</div><div class="mv" style="font-size:15px;">국민 · 건강 · 장기요양 · 고용 · 산재</div><div class="ms">일반 근로자 기본값</div></div>
-        <div class="metric gray"><div class="ml">예외 대상 선택</div><div class="mv" style="font-size:14px;">필요 시만 체크</div><div class="ms">체크 시 아래 항목 직접 조정</div></div>
+      <div class="card-title">4대보험 적용 설정 <span class="badge badge-purple">기본값: 전항목 적용</span></div>
+      <div class="section-note">기본값은 4대보험 전체 적용입니다. 특수 근로자(외국인·임원 등) 예외 적용 시 해당 항목만 해제하세요. <strong>건강보험에는 장기요양보험(건보료×13.14%)이 자동 포함</strong>됩니다.</div>
+      <div class="form-row2" style="margin-bottom:12px;">
+        <label class="ins-toggle"><input type="checkbox" id="use_pension" checked onchange="onInsuranceItemChange()"/> 국민연금 (4.75%)</label>
+        <label class="ins-toggle"><input type="checkbox" id="use_health" checked onchange="onInsuranceItemChange()"/> 건강보험 + 장기요양보험 (3.595% + 건보료×13.14%)</label>
+        <label class="ins-toggle"><input type="checkbox" id="use_employ" checked onchange="onInsuranceItemChange()"/> 고용보험 (실업급여 0.9% + 고용안정)</label>
+        <label class="ins-toggle"><input type="checkbox" id="use_accident" checked onchange="onInsuranceItemChange()"/> 산재보험 (업종별 요율)</label>
       </div>
-      <div class="form-row3" style="margin-bottom:12px;">
-        <label class="ins-toggle"><input type="checkbox" id="exc_director" onchange="toggleExceptionMode()"/> 대표이사 · 임원</label>
-        <label class="ins-toggle"><input type="checkbox" id="exc_foreigner" onchange="toggleExceptionMode()"/> 외국인</label>
-        <label class="ins-toggle"><input type="checkbox" id="exc_parttime" onchange="toggleExceptionMode()"/> 초단시간 근로자</label>
-      </div>
-      <div id="exception-config" class="exception-box" style="display:none;">
-        <div class="exception-title">예외 대상 적용 항목 선택</div>
-        <div class="section-note" style="margin-bottom:10px;">체크된 예외 대상 기준으로 기본 항목이 자동 반영되며, 아래 체크박스에서 실제 적용 항목만 다시 조정할 수 있습니다.</div>
-        <div class="form-row2">
-          <label class="ins-toggle"><input type="checkbox" id="use_pension" checked onchange="onInsuranceItemChange()"/> 국민연금</label>
-          <label class="ins-toggle"><input type="checkbox" id="use_health" checked onchange="onInsuranceItemChange()"/> 건강보험</label>
-          <label class="ins-toggle"><input type="checkbox" id="use_ltc" checked onchange="onInsuranceItemChange()"/> 장기요양보험</label>
-          <label class="ins-toggle"><input type="checkbox" id="use_employ" checked onchange="onInsuranceItemChange()"/> 고용보험</label>
-          <label class="ins-toggle"><input type="checkbox" id="use_accident" checked onchange="onInsuranceItemChange()"/> 산재보험</label>
-        </div>
-      </div>
-      <div id="insurance-mode-note" class="limit-note">현재는 일반 근로자 기준으로 4대보험 전체가 적용됩니다.</div>
+      <div id="insurance-mode-note" class="limit-note">현재는 4대보험 전체 항목이 적용됩니다.</div>
     </div>
 
     <div class="card">
@@ -409,12 +407,10 @@ select:focus,input:focus{outline:none;border-color:#4361ee;box-shadow:0 0 0 4px 
       <table class="ins-table">
         <thead><tr><th>항목</th><th>사업주</th><th>근로자</th><th>산출 기준</th></tr></thead>
         <tbody>
-          <tr><td>국민연금</td><td style="color:#c92a2a;font-weight:600;">4.75%</td><td style="color:#1864ab;">4.75%</td><td style="font-size:10px;color:#868e96;"><strong>기준소득월액</strong> 기준 (상·하한 적용) · 상한 월 637만원 (2026.7~)</td></tr>
-          <tr><td>건강보험</td><td style="color:#c92a2a;font-weight:600;">3.595%</td><td style="color:#1864ab;">3.595%</td><td style="font-size:10px;color:#868e96;"><strong>보수총액</strong> 기준 월 환산 · 연말 보수총액 정산</td></tr>
-          <tr><td>장기요양보험</td><td style="color:#c92a2a;font-weight:600;">건보료 × 13.14%</td><td style="color:#1864ab;">건보료 × 13.14%</td><td style="font-size:10px;color:#868e96;">건강보험료 기준 비례 산정</td></tr>
-          <tr><td>고용보험 (실업급여)</td><td style="color:#c92a2a;font-weight:600;">0.9%</td><td style="color:#1864ab;">0.9%</td><td style="font-size:10px;color:#868e96;"><strong>월평균보수</strong> 기준 · 사업주 고용안정분 추가</td></tr>
-          <tr><td>고용안정·직능개발</td><td style="color:#c92a2a;font-weight:600;">0.25~0.85%</td><td style="color:#868e96;">없음</td><td style="font-size:10px;color:#868e96;">사업장 규모별 차등 · 사업주 단독 부담</td></tr>
-          <tr><td>산재보험</td><td style="color:#c92a2a;font-weight:600;">업종별 전액</td><td style="color:#868e96;">없음</td><td style="font-size:10px;color:#868e96;"><strong>월평균보수</strong> 기준 임금총액 · 사업주 100% 부담</td></tr>
+          <tr><td>국민연금</td><td style="color:#c92a2a;font-weight:600;">4.75%</td><td style="color:#1864ab;">4.75%</td><td style="font-size:10px;color:#868e96;"><strong>기준소득월액</strong> 기준 · 상한 월 637만원 (2026.7~)</td></tr>
+          <tr><td>건강보험 + 장기요양보험</td><td style="color:#c92a2a;font-weight:600;">3.595% + 건보료×13.14%</td><td style="color:#1864ab;">3.595% + 건보료×13.14%</td><td style="font-size:10px;color:#868e96;"><strong>보수총액</strong> 기준 월 환산 · 장기요양은 건보료에 비례 자동 산정</td></tr>
+          <tr><td>고용보험</td><td style="color:#c92a2a;font-weight:600;">0.9% + 고용안정 0.25~0.85%</td><td style="color:#1864ab;">0.9%</td><td style="font-size:10px;color:#868e96;"><strong>월평균보수</strong> 기준 · 사업주 고용안정분 규모별 차등</td></tr>
+          <tr><td>산재보험</td><td style="color:#c92a2a;font-weight:600;">업종별 전액</td><td style="color:#868e96;">없음</td><td style="font-size:10px;color:#868e96;"><strong>월평균보수</strong> 기준 · 사업주 100% 부담</td></tr>
         </tbody>
       </table>
     </div>
@@ -497,19 +493,42 @@ select:focus,input:focus{outline:none;border-color:#4361ee;box-shadow:0 0 0 4px 
 
   <!-- ④ 손익분기점 -->
   <div class="panel" id="t3">
+    <!-- 목적 설명 배너 -->
+    <div style="background:linear-gradient(135deg,#1a1a2e 0%,#2c2c6c 100%);border-radius:16px;padding:18px 22px;margin-bottom:16px;color:#fff;display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
+      <div style="font-size:32px;">⚖️</div>
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:16px;font-weight:800;margin-bottom:4px;">인상 비용 vs 이탈 비용 — 어느 쪽이 더 클까요?</div>
+        <div style="font-size:12px;opacity:.75;line-height:1.7;">직원을 <strong style="color:#ffd43b;">인상</strong>했을 때 드는 비용과, 직원이 <strong style="color:#ff8787;">이탈</strong>했을 때 드는 비용을 비교합니다.<br>이탈 비용 &gt; 인상 비용이면 → <strong style="color:#69db7c;">급여 인상이 더 경제적</strong>입니다.</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <div style="background:rgba(255,255,255,.12);border-radius:10px;padding:10px 16px;text-align:center;">
+          <div style="font-size:9px;color:#adb5bd;margin-bottom:3px;">STEP 1</div>
+          <div style="font-size:11px;font-weight:700;">직원 추가</div>
+        </div>
+        <div style="background:rgba(255,255,255,.12);border-radius:10px;padding:10px 16px;text-align:center;">
+          <div style="font-size:9px;color:#adb5bd;margin-bottom:3px;">STEP 2</div>
+          <div style="font-size:11px;font-weight:700;">인상률 설정</div>
+        </div>
+        <div style="background:rgba(255,255,255,.12);border-radius:10px;padding:10px 16px;text-align:center;">
+          <div style="font-size:9px;color:#adb5bd;margin-bottom:3px;">STEP 3</div>
+          <div style="font-size:11px;font-weight:700;">결과 확인</div>
+        </div>
+      </div>
+    </div>
+
     <div class="card">
-      <div class="card-title">급여 인상 비용 설정 <span class="badge badge-green">직원별 개별 계산</span></div>
-      <div class="section-note">직원별로 연봉·인상률·이탈 비용을 입력하면 인상 비용과 직접 비교합니다.</div>
+      <div class="card-title">직원별 비용 비교 <span class="badge badge-green">인상 vs 이탈</span></div>
       <div class="emp-toolbar">
-        <div style="font-size:11px;color:#6c757d;">기본 연봉은 ① 탭 현재 연봉을 자동으로 불러옵니다.</div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <div class="fg" style="min-width:120px;">
+            <span class="fl">기본 인상률 (%)</span>
+            <input type="number" id="raise_rate" value="5" step="0.5" style="width:80px;" oninput="calcBEP();calcIns();renderEmployees();"/>
+          </div>
+          <div style="font-size:11px;color:#6c757d;">① 탭 현재 연봉 자동 반영 · 직원별 개별 조정 가능</div>
+        </div>
         <button class="emp-add-btn" onclick="addEmployee()">+ 직원 추가</button>
       </div>
       <div id="emp-list"></div>
-      <div class="divider"></div>
-      <div class="form-row2" style="align-items:start;">
-        <div class="fg"><span class="fl">기본 인상률 (%)</span><input type="number" id="raise_rate" value="5" step="0.5" oninput="calcBEP();calcIns();"/></div>
-        <div class="fg"><span class="fl">안내</span><div class="section-note" style="margin-bottom:0;">직원 추가 후 각 직원별 급여 인상 비용과 이탈 비용을 직접 비교합니다.</div></div>
-      </div>
     </div>
     <div id="bep-result"></div>
   </div>
@@ -602,60 +621,11 @@ function getLabel(id){var el=document.getElementById(id);return el.options[el.se
 /* ======================================================
    4대보험 계산
 ====================================================== */
-function hasExceptionSelected(){
-  return document.getElementById('exc_director').checked || document.getElementById('exc_foreigner').checked || document.getElementById('exc_parttime').checked;
-}
+function hasExceptionSelected(){ return false; }
+function toggleExceptionMode(){ updateInsuranceModeNote(); calcIns(); calcBEP(); }
 
-function getRecommendedInsuranceSelection(){
-  var sel={pension:true,health:true,ltc:true,employ:true,accident:true};
-  if(document.getElementById('exc_director').checked){
-    sel.employ=false;
-    sel.accident=false;
-  }
-  if(document.getElementById('exc_foreigner').checked){
-    sel.pension=false;
-    sel.employ=false;
-  }
-  if(document.getElementById('exc_parttime').checked){
-    sel.pension=false;
-    sel.employ=false;
-  }
-  return sel;
-}
-
-function applyInsuranceSelection(sel){
-  document.getElementById('use_pension').checked=!!sel.pension;
-  document.getElementById('use_health').checked=!!sel.health;
-  document.getElementById('use_ltc').checked=!!sel.ltc;
-  document.getElementById('use_employ').checked=!!sel.employ;
-  document.getElementById('use_accident').checked=!!sel.accident;
-  if(!document.getElementById('use_health').checked){
-    document.getElementById('use_ltc').checked=false;
-  }
-}
-
-function updateInsuranceModeNote(){
-  var note=document.getElementById('insurance-mode-note');
-  if(!hasExceptionSelected()){
-    note.innerHTML='현재는 일반 근로자 기준으로 4대보험 전체가 적용됩니다.';
-    return;
-  }
-  var labels=[];
-  if(document.getElementById('exc_director').checked) labels.push('대표이사·임원');
-  if(document.getElementById('exc_foreigner').checked) labels.push('외국인');
-  if(document.getElementById('exc_parttime').checked) labels.push('초단시간 근로자');
-  note.innerHTML='예외 대상 적용 중: <strong>'+labels.join(' · ')+'</strong> → 아래에서 체크한 보험 항목만 계산합니다.';
-}
-
-function toggleExceptionMode(){
-  var wrap=document.getElementById('exception-config');
-  var active=hasExceptionSelected();
-  wrap.style.display=active?'block':'none';
-  if(active){
-    applyInsuranceSelection(getRecommendedInsuranceSelection());
-  }else{
-    applyInsuranceSelection({pension:true,health:true,ltc:true,employ:true,accident:true});
-  }
+function onInsuranceItemChange(){
+  // 건강보험 해제 시 장기요양도 자동 해제 (내부 계산용)
   updateInsuranceModeNote();
   calcIns();
   calcBEP();
@@ -663,24 +633,25 @@ function toggleExceptionMode(){
   buildReport();
 }
 
-function onInsuranceItemChange(){
-  if(!document.getElementById('use_health').checked){
-    document.getElementById('use_ltc').checked=false;
+function updateInsuranceModeNote(){
+  var items=[];
+  if(!document.getElementById('use_pension').checked) items.push('국민연금');
+  if(!document.getElementById('use_health').checked) items.push('건강보험+장기요양');
+  if(!document.getElementById('use_employ').checked) items.push('고용보험');
+  if(!document.getElementById('use_accident').checked) items.push('산재보험');
+  var note=document.getElementById('insurance-mode-note');
+  if(items.length===0){
+    note.innerHTML='현재는 4대보험 전체 항목이 적용됩니다.';
+  } else {
+    note.innerHTML='제외 항목: <strong>'+items.join(' · ')+'</strong> → 해당 보험은 계산에서 제외됩니다.';
   }
-  calcIns();
-  calcBEP();
-  renderEmployees(false);
-  buildReport();
 }
 
 function getInsuranceSelection(){
-  if(!hasExceptionSelected()){
-    return {pension:true,health:true,ltc:true,employ:true,accident:true};
-  }
   return{
     pension:document.getElementById('use_pension').checked,
     health:document.getElementById('use_health').checked,
-    ltc:document.getElementById('use_ltc').checked,
+    ltc:document.getElementById('use_health').checked, // 건강보험에 항상 연동
     employ:document.getElementById('use_employ').checked,
     accident:document.getElementById('use_accident').checked
   };
@@ -778,23 +749,22 @@ function renderMarkers(nowPct, afterPct, d){
   }
   row.style.display='block';
   legend.style.display='flex';
-  var nowSal = state.pos ? state.pos.sal : 0;
   var v = posVerdict(nowPct);
+  var clampedPct = Math.max(3, Math.min(97, nowPct));
 
-  // 바 위에 원형 마커 + 아래에 연결선 + 라벨
-  // clamp so label doesn't go off edges
-  var clampedPct = Math.max(5, Math.min(95, nowPct));
+  // 색 원 마커 + 얇은 수직 선만 — 텍스트 없음
   row.innerHTML =
     '<div style="position:absolute;left:'+clampedPct.toFixed(1)+'%;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;pointer-events:none;z-index:5;">' +
-      // 라벨
-      '<div style="background:'+v.col+';color:#fff;font-size:11px;font-weight:800;padding:5px 13px;border-radius:999px;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.15);margin-bottom:6px;">📍 현재 '+fmtM(nowSal)+'</div>' +
-      // 연결 줄기 (바 쪽으로)
-      '<div style="width:2px;height:10px;background:'+v.col+';opacity:0.6;"></div>' +
+      '<div style="width:14px;height:14px;border-radius:50%;background:'+v.col+';border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.2);margin-bottom:4px;"></div>' +
+      '<div style="width:2px;height:8px;background:'+v.col+';opacity:0.5;"></div>' +
     '</div>';
 
+  // 범례: 색 뱃지 + 구간명만
+  var nowSal = state.pos ? state.pos.sal : 0;
   legend.innerHTML =
-    '<div class="pos-legend-item" style="color:'+v.col+';font-size:11px;font-weight:700;">'+
-      '현재 위치: <strong>'+v.text+'</strong> &nbsp;(업계 하위~상위 기준 '+Math.round(nowPct)+'%)'+
+    '<div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:'+v.col+';">' +
+      '<span style="width:10px;height:10px;border-radius:50%;background:'+v.col+';display:inline-block;box-shadow:0 1px 4px rgba(0,0,0,.15);"></span>' +
+      v.text +
     '</div>';
 }
 
@@ -911,24 +881,14 @@ function buildChartHtml(selInd,jt,sal,afterSal){
       var markerCX=colX+colW/2;
       var curY=CHART_H-curB;
       var aftY=CHART_H-aftB;
-      var nbLW=80, abLW=90;
 
-      // 현재: 가로 선
-      svg+='<rect x="'+(bx-2)+'" y="'+(curY-3)+'" width="'+(barW+4)+'" height="6" rx="3" fill="#4361ee"/>';
-      // 현재 말풍선 — 위로 28px
-      var nowBY=curY-50;
-      svg+='<line x1="'+markerCX+'" y1="'+(curY-3)+'" x2="'+markerCX+'" y2="'+(nowBY+22)+'" stroke="#4361ee" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.55"/>';
-      svg+='<rect x="'+(markerCX-nbLW/2)+'" y="'+nowBY+'" width="'+nbLW+'" height="24" rx="12" fill="#4361ee"/>';
-      svg+='<text x="'+markerCX+'" y="'+(nowBY+16)+'" text-anchor="middle" font-size="11" font-weight="bold" fill="#fff">현재 '+fmtM(sal)+'</text>';
+      // 현재: 굵은 가로선 (바 전체 너비)
+      svg+='<rect x="'+(bx-3)+'" y="'+(curY-4)+'" width="'+(barW+6)+'" height="8" rx="4" fill="#4361ee" filter="drop-shadow(0 2px 4px rgba(67,97,238,.5))"/>';
+      var nowBY=curY-68; if(nowBY<2) nowBY=2;
 
-      // 인상 후: 가로 선 + 말풍선 (현재 말풍선 바로 아래에 붙게)
+      // 인상 후: 굵은 가로선
       if(afterSal&&afterSal!==sal){
-        svg+='<rect x="'+(bx-2)+'" y="'+(aftY-3)+'" width="'+(barW+4)+'" height="6" rx="3" fill="#f76707"/>';
-        // 인상 후 말풍선은 현재 말풍선 아래에 고정 배치
-        var aftBY=nowBY+30;
-        svg+='<line x1="'+markerCX+'" y1="'+(aftY-3)+'" x2="'+markerCX+'" y2="'+(aftBY+22)+'" stroke="#f76707" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.55"/>';
-        svg+='<rect x="'+(markerCX-abLW/2)+'" y="'+aftBY+'" width="'+abLW+'" height="24" rx="12" fill="#f76707"/>';
-        svg+='<text x="'+markerCX+'" y="'+(aftBY+16)+'" text-anchor="middle" font-size="11" font-weight="bold" fill="#fff">인상 후 '+fmtM(afterSal)+'</text>';
+        svg+='<rect x="'+(bx-3)+'" y="'+(aftY-4)+'" width="'+(barW+6)+'" height="8" rx="4" fill="#f76707" filter="drop-shadow(0 2px 4px rgba(247,103,7,.5))"/>';
       }
     }
   });
@@ -1040,80 +1000,30 @@ function buildRaiseChips(baseSal,d){
 }
 
 function drawRaiseSvgBar(nowPct, afterPct, salNow, salAfter, d){
-  var W = 400, H = 110;
-  var BAR_Y = 68, BAR_H = 22, BAR_R = 11;
-  var L = 16, R = W - 16; // 실제 바 시작/끝 x
+  var W=400, H=52;
+  var BAR_Y=15, BAR_H=22, BAR_R=11;
+  var L=16, R=W-16;
+  var barW=R-L;
+  function px(pct){ return L+(R-L)*pct/100; }
+  var nowX=px(nowPct);
+  var aftX=px(afterPct);
 
-  function px(pct){ return L + (R - L) * pct / 100; }
-  // 라벨이 SVG 밖으로 안 나가도록 클램프
-  function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">';
 
-  var nowX  = px(nowPct);
-  var aftX  = px(afterPct);
-  var nowV  = posVerdict(nowPct);
-  var aftV  = posVerdict(afterPct);
+  // clipPath으로 깔끔한 둥근 모서리 바
+  svg+='<defs><clipPath id="rsbClip"><rect x="'+L+'" y="'+BAR_Y+'" width="'+barW+'" height="'+BAR_H+'" rx="'+BAR_R+'"/></clipPath></defs>';
+  svg+='<rect x="'+L+'" y="'+BAR_Y+'" width="'+(barW*0.25).toFixed(1)+'" height="'+BAR_H+'" fill="#ff8787" clip-path="url(#rsbClip)"/>';
+  svg+='<rect x="'+(L+barW*0.25).toFixed(1)+'" y="'+BAR_Y+'" width="'+(barW*0.5).toFixed(1)+'" height="'+BAR_H+'" fill="#ffd43b" clip-path="url(#rsbClip)"/>';
+  svg+='<rect x="'+(L+barW*0.75).toFixed(1)+'" y="'+BAR_Y+'" width="'+(barW*0.25).toFixed(1)+'" height="'+BAR_H+'" fill="#69db7c" clip-path="url(#rsbClip)"/>';
+  // 구간 경계선
+  svg+='<line x1="'+(L+barW*0.25).toFixed(1)+'" y1="'+BAR_Y+'" x2="'+(L+barW*0.25).toFixed(1)+'" y2="'+(BAR_Y+BAR_H)+'" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"/>';
+  svg+='<line x1="'+(L+barW*0.75).toFixed(1)+'" y1="'+BAR_Y+'" x2="'+(L+barW*0.75).toFixed(1)+'" y2="'+(BAR_Y+BAR_H)+'" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"/>';
 
-  var LW_NOW = 80, LW_AFT = 96, LH = 24, LR = 12;
-  // 라벨 중심 x (바 경계 안에 고정)
-  var nowLX = clamp(nowX, L + LW_NOW/2, R - LW_NOW/2);
-  var aftLX = clamp(aftX, L + LW_AFT/2, R - LW_AFT/2);
+  // 원 마커만 — 줄기/점선 없음
+  svg+='<circle cx="'+nowX.toFixed(1)+'" cy="'+(BAR_Y+BAR_H/2)+'" r="8" fill="#4361ee" stroke="#fff" stroke-width="3"/>';
+  svg+='<circle cx="'+aftX.toFixed(1)+'" cy="'+(BAR_Y+BAR_H/2)+'" r="8" fill="#f76707" stroke="#fff" stroke-width="3"/>';
 
-  // 겹침 감지: 두 마커의 실제 픽셀 거리
-  var overlap = Math.abs(aftX - nowX) < 28;
-  // 겹치면: 현재=위(Y=6), 인상 후=아래(Y=42) / 아니면 둘 다 위(Y=8)
-  var nowLY  = overlap ? 5  : 8;
-  var aftLY  = overlap ? 40 : 8;
-  var nowStemY1 = nowLY + LH;       // 라벨 아래
-  var aftStemY1 = aftLY + LH;
-  var stemY2    = BAR_Y - 1;        // 바 직전
-
-  var nowTextY = nowLY + LH - 7;
-  var aftTextY = aftLY + LH - 7;
-
-  var barW = R - L;
-
-  var svg =
-    '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;font-family:\'Malgun Gothic\',sans-serif;">' +
-
-    // 바 배경 3구간
-    '<rect x="'+L+'" y="'+BAR_Y+'" width="'+(barW*0.25).toFixed(1)+'" height="'+BAR_H+'" rx="'+BAR_R+'" ry="'+BAR_R+'" fill="#ff8787"/>' +
-    '<rect x="'+(L+barW*0.25).toFixed(1)+'" y="'+BAR_Y+'" width="'+(barW*0.5).toFixed(1)+'" height="'+BAR_H+'" fill="#ffd43b"/>' +
-    '<rect x="'+(L+barW*0.75).toFixed(1)+'" y="'+BAR_Y+'" width="'+(barW*0.25).toFixed(1)+'" height="'+BAR_H+'" rx="'+BAR_R+'" ry="'+BAR_R+'" fill="#69db7c"/>' +
-    // 왼쪽 끝 다시 덮어서 왼쪽만 둥글게
-    '<rect x="'+L+'" y="'+BAR_Y+'" width="'+(barW*0.25+4).toFixed(1)+'" height="'+BAR_H+'" fill="#ff8787" rx="0"/>' +
-    '<rect x="'+L+'" y="'+BAR_Y+'" width="'+BAR_R*2+'" height="'+BAR_H+'" rx="'+BAR_R+'" ry="'+BAR_R+'" fill="#ff8787"/>' +
-    // 오른쪽 끝 덮어서 오른쪽만 둥글게
-    '<rect x="'+(R-barW*0.25-4).toFixed(1)+'" y="'+BAR_Y+'" width="'+(barW*0.25+4).toFixed(1)+'" height="'+BAR_H+'" fill="#69db7c" rx="0"/>' +
-    '<rect x="'+(R-BAR_R*2)+'" y="'+BAR_Y+'" width="'+(BAR_R*2)+'" height="'+BAR_H+'" rx="'+BAR_R+'" ry="'+BAR_R+'" fill="#69db7c"/>' +
-
-    // 구간 경계선
-    '<line x1="'+(L+barW*0.25).toFixed(1)+'" y1="'+BAR_Y+'" x2="'+(L+barW*0.25).toFixed(1)+'" y2="'+(BAR_Y+BAR_H)+'" stroke="rgba(255,255,255,0.7)" stroke-width="2"/>' +
-    '<line x1="'+(L+barW*0.75).toFixed(1)+'" y1="'+BAR_Y+'" x2="'+(L+barW*0.75).toFixed(1)+'" y2="'+(BAR_Y+BAR_H)+'" stroke="rgba(255,255,255,0.7)" stroke-width="2"/>' +
-
-    // 구간 텍스트 (바 아래)
-    '<text x="'+(L+barW*0.125).toFixed(1)+'" y="'+(BAR_Y+BAR_H+13)+'" text-anchor="middle" font-size="9" fill="#999">하위 25%</text>' +
-    '<text x="'+(L+barW*0.5).toFixed(1)+'"   y="'+(BAR_Y+BAR_H+13)+'" text-anchor="middle" font-size="9" fill="#999">중위 50%</text>' +
-    '<text x="'+(L+barW*0.875).toFixed(1)+'"  y="'+(BAR_Y+BAR_H+13)+'" text-anchor="middle" font-size="9" fill="#999">상위 25%</text>' +
-    '<text x="'+L+'"  y="'+(BAR_Y+BAR_H+13)+'" text-anchor="start" font-size="9" fill="#bbb">'+fmtM(d.low)+'</text>' +
-    '<text x="'+R+'"  y="'+(BAR_Y+BAR_H+13)+'" text-anchor="end"   font-size="9" fill="#bbb">'+fmtM(d.high)+'</text>' +
-
-    // ── 현재 마커 ──
-    // 줄기 (라벨 → 바)
-    '<line x1="'+nowX.toFixed(1)+'" y1="'+nowStemY1+'" x2="'+nowX.toFixed(1)+'" y2="'+stemY2+'" stroke="#4361ee" stroke-width="2" stroke-dasharray="3,2" opacity="0.8"/>' +
-    // 바 위 원
-    '<circle cx="'+nowX.toFixed(1)+'" cy="'+(BAR_Y)+'" r="6" fill="#4361ee" stroke="#fff" stroke-width="2.5"/>' +
-    // 라벨 배경
-    '<rect x="'+(nowLX-LW_NOW/2)+'" y="'+nowLY+'" width="'+LW_NOW+'" height="'+LH+'" rx="'+LR+'" fill="#4361ee"/>' +
-    // 라벨 텍스트
-    '<text x="'+nowLX+'" y="'+nowTextY+'" text-anchor="middle" font-size="10" font-weight="bold" fill="#fff">현재 '+fmtM(salNow)+'</text>' +
-
-    // ── 인상 후 마커 ──
-    '<line x1="'+aftX.toFixed(1)+'" y1="'+aftStemY1+'" x2="'+aftX.toFixed(1)+'" y2="'+stemY2+'" stroke="#f76707" stroke-width="2" stroke-dasharray="3,2" opacity="0.8"/>' +
-    '<circle cx="'+aftX.toFixed(1)+'" cy="'+(BAR_Y)+'" r="6" fill="#f76707" stroke="#fff" stroke-width="2.5"/>' +
-    '<rect x="'+(aftLX-LW_AFT/2)+'" y="'+aftLY+'" width="'+LW_AFT+'" height="'+LH+'" rx="'+LR+'" fill="#f76707"/>' +
-    '<text x="'+aftLX+'" y="'+aftTextY+'" text-anchor="middle" font-size="10" font-weight="bold" fill="#fff">인상 후 '+fmtM(salAfter)+'</text>' +
-
-    '</svg>';
+  svg+='</svg>';
   return svg;
 }
 
@@ -1172,15 +1082,13 @@ function calcIns(){
   state.ins={ins,monthlyWage:mw,sal,raiseRate:rr,raiseAmount,insuranceIncrease,retirementIncrease,totalAnnualIncrease};
 
   var pensionNote=sel.pension?(ins.capped?'기준소득월액 상한 적용 → '+fmt(ins.pensionBase)+'원 × 4.75%':'기준소득월액 × 4.75% ('+fmt(mw)+'원)'):'선택 해제';
-  var healthNote=sel.health?'보수총액 기준 월 환산 → '+fmt(mw)+'원 × 3.595%':'선택 해제';
-  var ltcNote=(sel.health&&sel.ltc)?'건강보험료 × 13.14% ('+fmt(ins.health)+'원 × 13.14%)':'선택 해제';
+  var healthNote=sel.health?'보수총액 × 3.595% + 건보료 × 13.14% (장기요양 포함)':'선택 해제';
   var employNote=sel.employ?'월평균보수 × '+(0.9+sr).toFixed(2)+'% (실업급여 0.9% + 고용안정 '+sr+'%)':'선택 해제';
   var accidentNote=sel.accident?'월평균보수(임금총액) × '+ar+'% 사업주 전액 부담':'선택 해제';
 
   var html='<table class="ins-table"><thead><tr><th>항목</th><th>사업주 (월)</th><th>근로자 (월)</th><th>산출근거</th></tr></thead><tbody>'+
     insRow('국민연금 (4.75%)',ins.pension,ins.workerPension,pensionNote)+
-    insRow('건강보험 (3.595%)',ins.health,ins.workerHealth,healthNote)+
-    insRow('장기요양보험',ins.ltc,ins.workerLtc,ltcNote)+
+    insRow('건강보험+장기요양',ins.health+ins.ltc,ins.workerHealth+ins.workerLtc,healthNote)+
     insRow('고용보험',ins.employ,ins.workerEmploy,employNote)+
     insRow('산재보험',ins.accident,0,accidentNote)+
     '<tr class="total-row"><td>합계</td><td style="color:#c92a2a;">'+fmt(ins.totalCo)+'원</td><td style="color:#1864ab;">'+fmt(ins.totalW)+'원</td><td></td></tr></tbody></table>'+
@@ -1285,21 +1193,26 @@ function calcAttr(){
   var optTotal=0;
   var optDetails=[];
   var total=recruit+gap+prod+handover+extraTotal;
-  state.attr={recruit,gap,prod,handover,optTotal,extraTotal,total,optDetails};
+  state.attr={recruit,gap,prod,handover,optTotal:0,extraTotal,total,optDetails:[],extraItems:extraItems.slice()};
 
-  // 오른쪽 차트 렌더
+  // 오른쪽 차트 렌더 — 기타 항목은 개별 표시
   var items=[
     {l:'① 채용비',v:recruit,c:'#ff6b6b'},
     {l:'② 공백비',v:gap,c:'#ff8787'},
     {l:'③ 생산성 손실',v:prod,c:'#ffa8a8'},
     {l:'④ 인수인계',v:handover,c:'#ffc9c9'},
-    {l:'기타 항목',v:extraTotal,c:'#a9e34b'}
   ];
+  // 기타 항목 개별 추가
+  extraItems.forEach(function(e,i){
+    if(e.value>0){
+      items.push({l:'⑤ '+(e.name||('기타'+(i+1))),v:e.value,c:'#a9e34b'});
+    }
+  });
   var barsHtml='';
   items.forEach(function(item){
     var pct=total>0?Math.round(item.v/total*100):0;
     barsHtml+='<div class="attr-bar-item">'+
-      '<div class="attr-bar-label"><span style="color:#495057;">'+item.l+'</span><span style="color:#212529;">'+fmt(item.v)+'원 ('+pct+'%)</span></div>'+
+      '<div class="attr-bar-label"><span style="color:#495057;">'+item.l+'</span><span style="color:#212529;font-weight:700;">'+fmt(item.v)+'원 <span style="color:#868e96;font-weight:400;">('+pct+'%)</span></span></div>'+
       '<div class="attr-bar-track"><div class="attr-bar-fill" style="width:'+pct+'%;background:'+item.c+';"></div></div>'+
     '</div>';
   });
@@ -1375,60 +1288,84 @@ function refreshEmployeeCard(id){
 function renderEmployees(resetEmpty){
   if(resetEmpty===undefined)resetEmpty=true;
   var wrap=document.getElementById('emp-list');
-  if(employees.length===0){wrap.className='emp-empty';wrap.innerHTML='<div style="padding:12px;font-size:11px;color:#868e96;">+ 직원 추가 버튼으로 직원을 추가하세요.</div>';return;}
+  if(employees.length===0){
+    wrap.className='emp-empty';
+    wrap.innerHTML='<div style="text-align:center;padding:24px;color:#868e96;font-size:12px;">위 <strong>+ 직원 추가</strong> 버튼으로 비교할 직원을 추가하세요.</div>';
+    return;
+  }
   wrap.className='';
   var html='';
-  employees.forEach(function(e,idx){
+  employees.forEach(function(e){
     var rd=getEmployeeRaiseDetail(e.salary,e.rate);
     var ad=getEmployeeAttrDetail(e);
     var diff=ad.total-rd.total;
-    html+='<div class="emp-item" id="emp-card-'+e.id+'">'+
-      '<div class="emp-head"><span data-role="emp-name" style="font-size:12px;font-weight:700;">'+(e.name&&e.name.trim()?e.name:'직원명 입력')+'</span><button class="emp-del" onclick="removeEmployee('+e.id+')">삭제</button></div>'+
-      '<!-- 기본 정보 -->'+
-      '<div class="form-row3" style="margin-bottom:8px;">'+
-        '<div class="fg"><span class="fl">직원명</span><input type="text" value="'+(e.name||'')+'" oninput="updateEmployee('+e.id+',&quot;name&quot;,this.value)"/></div>'+
-        '<div class="fg"><span class="fl">현재 연봉 (원)</span><input type="text" value="'+fmtComma(e.salary)+'" oninput="updateEmployeeMoneyInput(this,'+e.id+',&quot;salary&quot;)"/></div>'+
-        '<div class="fg"><span class="fl">인상률 (%)</span><input type="number" value="'+e.rate+'" step="0.5" oninput="updateEmployee('+e.id+',&quot;rate&quot;,this.value)"/></div>'+
-      '</div>'+
-      '<!-- 이탈 비용 입력 (접기/펼치기) -->'+
-      '<div style="margin-bottom:8px;">'+
-        '<div onclick="toggleEmpAttr('+e.id+')" style="cursor:pointer;font-size:10px;font-weight:700;color:#4361ee;background:#f0f3ff;padding:7px 12px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;border:1px solid #d4def7;">'+
-          '<span>⚙️ 이탈 비용 직접 입력</span>'+
-          '<span id="emp-attr-toggle-'+e.id+'">▼</span>'+
-        '</div>'+
-        '<div id="emp-attr-panel-'+e.id+'" style="display:none;margin-top:6px;background:#fff9f0;border:1px solid #ffe4c4;border-radius:10px;padding:12px;">'+
-          '<div class="form-row3" style="margin-bottom:8px;align-items:start;">'+
-            '<div class="fg"><span class="fl">공고료 (원)</span><input type="text" value="'+fmtComma(e.ad_cost||300000)+'" oninput="updateEmpMoneyField(this,'+e.id+',&quot;ad_cost&quot;)"/></div>'+
-            '<div class="fg"><span class="fl">담당자 시급 (원)</span><input type="text" value="'+fmtComma(e.hr_wage||20000)+'" oninput="updateEmpMoneyField(this,'+e.id+',&quot;hr_wage&quot;)"/></div>'+
-            '<div class="fg"><span class="fl">채용 소요시간 (h)</span><input type="number" value="'+(e.hr_hours||40)+'" oninput="updateEmployee('+e.id+',&quot;hr_hours&quot;,this.value)"/></div>'+
-          '</div>'+
-          '<div class="form-row2" style="margin-bottom:8px;">'+
-            '<div class="fg"><span class="fl">대체인력 월비용 (원)</span><input type="text" value="'+fmtComma(e.replace_cost||2500000)+'" oninput="updateEmpMoneyField(this,'+e.id+',&quot;replace_cost&quot;)"/></div>'+
-            '<div class="fg"><span class="fl">공백 기간 (개월)</span><input type="number" value="'+(e.gap_months||2)+'" oninput="updateEmployee('+e.id+',&quot;gap_months&quot;,this.value)"/></div>'+
-          '</div>'+
-          '<div class="form-row3" style="margin-bottom:8px;align-items:start;">'+
-            '<div class="fg"><span class="fl">신규자 월인건비 (원)</span><input type="text" value="'+fmtComma(e.new_monthly||3000000)+'" oninput="updateEmpMoneyField(this,'+e.id+',&quot;new_monthly&quot;)"/></div>'+
-            '<div class="fg"><span class="fl">수습기간 (개월)</span><input type="number" value="'+(e.probation||3)+'" oninput="updateEmployee('+e.id+',&quot;probation&quot;,this.value)"/></div>'+
-            '<div class="fg"><span class="fl">생산성 부족률 (%)</span><input type="number" value="'+(e.prod_gap||40)+'" oninput="updateEmployee('+e.id+',&quot;prod_gap&quot;,this.value)"/></div>'+
-          '</div>'+
-          '<div class="form-row2" style="margin-bottom:0;">'+
-            '<div class="fg"><span class="fl">기존직원 시급 (원)</span><input type="text" value="'+fmtComma(e.old_wage||25000)+'" oninput="updateEmpMoneyField(this,'+e.id+',&quot;old_wage&quot;)"/></div>'+
-            '<div class="fg"><span class="fl">인수인계 투입시간 (h)</span><input type="number" value="'+(e.handover_h||60)+'" oninput="updateEmployee('+e.id+',&quot;handover_h&quot;,this.value)"/></div>'+
-          '</div>'+
-        '</div>'+
-      '</div>'+
-      '<!-- KPI 요약 -->'+
-      '<div class="emp-summary">'+
-        '<div class="emp-kpi"><div class="k">직접 인상액</div><div class="v" data-kpi="direct">'+fmt(rd.direct)+'원</div></div>'+
-        '<div class="emp-kpi"><div class="k">보험 증가분</div><div class="v" data-kpi="insurance">'+fmt(rd.insurance)+'원</div></div>'+
-        '<div class="emp-kpi"><div class="k">퇴직금 증가</div><div class="v" data-kpi="retirement">'+fmt(rd.retirement)+'원</div></div>'+
-        '<div class="emp-kpi"><div class="k">인상 총비용</div><div class="v" data-kpi="total" style="color:#c92a2a;">'+fmt(rd.total)+'원</div></div>'+
-      '</div>'+
-      '<div class="emp-summary" style="margin-top:8px;grid-template-columns:repeat(2,1fr);">'+
-        '<div class="emp-kpi"><div class="k">이탈 비용</div><div class="v" data-kpi="attr">'+fmt(ad.total)+'원</div></div>'+
-        '<div class="emp-kpi"><div class="k">순효과</div><div class="v" data-kpi="diff" style="color:'+(diff>=0?'#2b8a3e':'#c92a2a')+';">'+(diff>=0?'+':'')+fmt(diff)+'원</div></div>'+
-      '</div>'+
-    '</div>';
+    var verdict=diff>0?{icon:'✅',text:'인상이 유리',bg:'#ebfbee',col:'#2b8a3e'}:diff>-500000?{icon:'⚖️',text:'손익분기',bg:'#fff9db',col:'#e67700'}:{icon:'⚠️',text:'비용 검토',bg:'#fff5f5',col:'#c92a2a'};
+    var maxCost=Math.max(rd.total,ad.total,1);
+    var rPct=Math.round(rd.total/maxCost*100);
+    var aPct=Math.round(ad.total/maxCost*100);
+
+    html+='<div class="emp-item" id="emp-card-'+e.id+'" style="margin-bottom:14px;">';
+    // 헤더
+    html+='<div class="emp-head">';
+    html+='<span data-role="emp-name" style="font-size:13px;font-weight:800;color:#243041;">'+(e.name&&e.name.trim()?e.name:'직원명 입력')+'</span>';
+    html+='<div style="display:flex;align-items:center;gap:8px;">';
+    html+='<span style="background:'+verdict.bg+';color:'+verdict.col+';font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px;">'+verdict.icon+' '+verdict.text+'</span>';
+    html+='<button class="emp-del" onclick="removeEmployee('+e.id+')">삭제</button>';
+    html+='</div></div>';
+    // 입력
+    html+='<div class="form-row3" style="margin:10px 0 10px;">';
+    html+='<div class="fg"><span class="fl">직원명</span><input type="text" value="'+(e.name||'')+'" oninput="updateEmployee('+e.id+',&quot;name&quot;,this.value)"/></div>';
+    html+='<div class="fg"><span class="fl">현재 연봉 (원)</span><input type="text" value="'+fmtComma(e.salary)+'" oninput="updateEmployeeMoneyInput(this,'+e.id+',&quot;salary&quot;)"/></div>';
+    html+='<div class="fg"><span class="fl">인상률 (%)</span><input type="number" value="'+e.rate+'" step="0.5" oninput="updateEmployee('+e.id+',&quot;rate&quot;,this.value)"/></div>';
+    html+='</div>';
+    // 핵심 시각 비교
+    html+='<div style="display:grid;grid-template-columns:1fr 80px 1fr;gap:10px;align-items:center;background:#f8f9fa;border-radius:14px;padding:14px 12px;">';
+    // 왼쪽: 인상 비용
+    html+='<div style="background:#fff;border:2px solid #4361ee;border-radius:12px;padding:12px;text-align:center;">';
+    html+='<div style="font-size:10px;font-weight:700;color:#4361ee;margin-bottom:6px;">💰 인상 비용</div>';
+    html+='<div style="font-size:20px;font-weight:800;color:#4361ee;" data-kpi="total">'+fmt(rd.total)+'원</div>';
+    html+='<div style="font-size:9px;color:#868e96;margin-top:5px;line-height:1.6;">직접 인상 '+fmt(rd.direct)+'<br>보험+퇴직금 '+fmt(rd.insurance+rd.retirement)+'</div>';
+    html+='<div style="margin-top:8px;height:5px;background:#e9ecef;border-radius:3px;overflow:hidden;"><div style="height:100%;background:#4361ee;border-radius:3px;width:'+rPct+'%;transition:width .4s;"></div></div>';
+    html+='</div>';
+    // 가운데: 판정
+    html+='<div style="text-align:center;padding:8px 0;">';
+    html+='<div style="font-size:28px;line-height:1;">'+verdict.icon+'</div>';
+    html+='<div style="font-size:9px;font-weight:700;color:'+verdict.col+';margin-top:4px;line-height:1.4;">'+verdict.text+'</div>';
+    html+='<div style="font-size:11px;font-weight:800;color:'+verdict.col+';margin-top:6px;background:'+verdict.bg+';border-radius:8px;padding:4px;" data-kpi="diff">'+(diff>=0?'+':'')+fmt(diff)+'<br><span style="font-size:8px;font-weight:600;">원 차이</span></div>';
+    html+='</div>';
+    // 오른쪽: 이탈 비용
+    html+='<div style="background:#fff;border:2px solid #ff6b6b;border-radius:12px;padding:12px;text-align:center;">';
+    html+='<div style="font-size:10px;font-weight:700;color:#c92a2a;margin-bottom:6px;">🚪 이탈 비용</div>';
+    html+='<div style="font-size:20px;font-weight:800;color:#c92a2a;" data-kpi="attr">'+fmt(ad.total)+'원</div>';
+    html+='<div style="font-size:9px;color:#868e96;margin-top:5px;line-height:1.6;">채용+공백 '+fmt(ad.recruit+ad.gap)+'<br>생산성+인계 '+fmt(ad.prod+ad.handover)+'</div>';
+    html+='<div style="margin-top:8px;height:5px;background:#e9ecef;border-radius:3px;overflow:hidden;"><div style="height:100%;background:#ff6b6b;border-radius:3px;width:'+aPct+'%;transition:width .4s;"></div></div>';
+    html+='</div>';
+    html+='</div>';
+    // 이탈비용 상세 토글
+    html+='<div style="margin-top:8px;">';
+    html+='<div onclick="toggleEmpAttr('+e.id+')" style="cursor:pointer;font-size:10px;font-weight:700;color:#4361ee;background:#f0f3ff;padding:7px 12px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;border:1px solid #d4def7;">';
+    html+='<span>⚙️ 이탈 비용 상세 입력 (③탭 값 자동 반영)</span><span id="emp-attr-toggle-'+e.id+'">▼</span>';
+    html+='</div>';
+    html+='<div id="emp-attr-panel-'+e.id+'" style="display:none;margin-top:6px;background:#fff9f0;border:1px solid #ffe4c4;border-radius:10px;padding:12px;">';
+    html+='<div class="form-row3" style="margin-bottom:8px;align-items:start;">';
+    html+='<div class="fg"><span class="fl">공고료 (원)</span><input type="text" value="'+fmtComma(e.ad_cost||300000)+'" oninput="updateEmpMoneyField(this,'+e.id+',&quot;ad_cost&quot;)"/></div>';
+    html+='<div class="fg"><span class="fl">담당자 시급 (원)</span><input type="text" value="'+fmtComma(e.hr_wage||20000)+'" oninput="updateEmpMoneyField(this,'+e.id+',&quot;hr_wage&quot;)"/></div>';
+    html+='<div class="fg"><span class="fl">채용 소요시간 (h)</span><input type="number" value="'+(e.hr_hours||40)+'" oninput="updateEmployee('+e.id+',&quot;hr_hours&quot;,this.value)"/></div>';
+    html+='</div>';
+    html+='<div class="form-row2" style="margin-bottom:8px;">';
+    html+='<div class="fg"><span class="fl">대체인력 월비용 (원)</span><input type="text" value="'+fmtComma(e.replace_cost||2500000)+'" oninput="updateEmpMoneyField(this,'+e.id+',&quot;replace_cost&quot;)"/></div>';
+    html+='<div class="fg"><span class="fl">공백 기간 (개월)</span><input type="number" value="'+(e.gap_months||2)+'" oninput="updateEmployee('+e.id+',&quot;gap_months&quot;,this.value)"/></div>';
+    html+='</div>';
+    html+='<div class="form-row3" style="margin-bottom:8px;align-items:start;">';
+    html+='<div class="fg"><span class="fl">신규자 월인건비 (원)</span><input type="text" value="'+fmtComma(e.new_monthly||3000000)+'" oninput="updateEmpMoneyField(this,'+e.id+',&quot;new_monthly&quot;)"/></div>';
+    html+='<div class="fg"><span class="fl">수습기간 (개월)</span><input type="number" value="'+(e.probation||3)+'" oninput="updateEmployee('+e.id+',&quot;probation&quot;,this.value)"/></div>';
+    html+='<div class="fg"><span class="fl">생산성 부족률 (%)</span><input type="number" value="'+(e.prod_gap||40)+'" oninput="updateEmployee('+e.id+',&quot;prod_gap&quot;,this.value)"/></div>';
+    html+='</div>';
+    html+='<div class="form-row2">';
+    html+='<div class="fg"><span class="fl">기존직원 시급 (원)</span><input type="text" value="'+fmtComma(e.old_wage||25000)+'" oninput="updateEmpMoneyField(this,'+e.id+',&quot;old_wage&quot;)"/></div>';
+    html+='<div class="fg"><span class="fl">인수인계 투입시간 (h)</span><input type="number" value="'+(e.handover_h||60)+'" oninput="updateEmployee('+e.id+',&quot;handover_h&quot;,this.value)"/></div>';
+    html+='</div></div></div>';
+    html+='</div>';
   });
   wrap.innerHTML=html;
 }
@@ -1520,134 +1457,396 @@ function calcBEP(){
     listTable+='<tr class="total-row"><td colspan="3">합계</td><td>'+fmt(tr)+'원</td><td>'+fmt(at)+'원</td><td style="color:'+(diff>=0?'#2b8a3e':'#c92a2a')+';">'+(diff>=0?'+':'')+fmt(diff)+'원</td></tr></tbody></table></div>';
   }
 
-  document.getElementById('bep-result').innerHTML=
-    '<div class="card"><div class="card-title">비용 비교</div>'+
-    '<div class="metric-grid metric-grid-3">'+
-      '<div class="metric green"><div class="ml">급여 인상 총비용</div><div class="mv">'+fmt(tr)+'</div><div class="ms">원</div></div>'+
-      '<div class="metric red"><div class="ml">이탈 비용 합계</div><div class="mv">'+fmt(at)+'</div><div class="ms">원 ('+employeeCount+'명)</div></div>'+
-      '<div class="metric blue"><div class="ml">비용 차이</div><div class="mv" style="color:'+(diff>0?'#2b8a3e':'#c92a2a')+'">'+(diff>0?'+':'')+fmt(diff)+'</div><div class="ms">'+(diff>0?'이탈>인상':'인상>이탈')+'</div></div>'+
+  // 직원별 피드백 테이블
+  var feedbackRows='';
+  if(employees.length>0){
+    employees.forEach(function(e,idx){
+      var rd=getEmployeeRaiseDetail(e.salary,e.rate);
+      var ad=getEmployeeAttrDetail(e);
+      var rowDiff=ad.total-rd.total;
+      var roi=ad.total>0?Math.round(ad.total/Math.max(rd.total,1)*100):0;
+      // 객관적 피드백 생성
+      var fb='';
+      if(rowDiff>0){
+        fb='이탈 시 인상비용보다 <strong style="color:#2b8a3e">'+fmt(rowDiff)+'원 더 발생</strong>. 인상이 경제적.';
+      } else if(rowDiff>-500000){
+        fb='인상·이탈 비용 차이 <strong style="color:#e67700">'+fmt(Math.abs(rowDiff))+'원</strong> 이내. 비금전적 요인 함께 고려 필요.';
+      } else {
+        fb='인상비용이 이탈비용보다 <strong style="color:#c92a2a">'+fmt(Math.abs(rowDiff))+'원 초과</strong>. 인상 규모 재검토 권고.';
+      }
+      var tag=rowDiff>0?'<span style="background:#ebfbee;color:#2b8a3e;font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;">인상 권고</span>':rowDiff>-500000?'<span style="background:#fff9db;color:#e67700;font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;">검토</span>':'<span style="background:#fff5f5;color:#c92a2a;font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;">재검토</span>';
+      feedbackRows+='<tr>'+
+        '<td style="font-weight:700;">'+(e.name||('직원 '+(idx+1)))+'</td>'+
+        '<td style="text-align:right;">'+fmt(e.salary)+'</td>'+
+        '<td style="text-align:center;font-weight:700;color:#4361ee;">'+e.rate+'%</td>'+
+        '<td style="text-align:right;color:#4361ee;font-weight:600;">'+fmt(rd.total)+'</td>'+
+        '<td style="text-align:right;color:#c92a2a;font-weight:600;">'+fmt(ad.total)+'</td>'+
+        '<td style="text-align:center;">'+roi+'%</td>'+
+        '<td style="text-align:right;font-weight:700;color:'+(rowDiff>=0?'#2b8a3e':'#c92a2a')+';">'+(rowDiff>=0?'+':'')+fmt(rowDiff)+'</td>'+
+        '<td>'+tag+'</td>'+
+      '</tr>'+
+      '<tr style="background:#fafbff;border-bottom:1px solid #eef2f8;">'+
+        '<td colspan="8" style="padding:6px 10px;font-size:11px;color:#495057;line-height:1.6;">💬 '+fb+'</td>'+
+      '</tr>';
+    });
+  }
+
+  // 누적 요약 바
+  var maxCost=Math.max(tr,at,1);
+  var rBar=Math.round(tr/maxCost*100);
+  var aBar=Math.round(at/maxCost*100);
+  var savingsRate=at>0?Math.round((at-tr)/at*100):0;
+
+  var summaryHtml=
+    '<div class="card">'+
+    '<div class="card-title">전체 누적 비용 요약 <span class="badge badge-blue">'+employeeCount+'명 기준</span></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">'+
+      '<div style="background:#f0f3ff;border-radius:12px;padding:14px;">'+
+        '<div style="font-size:10px;font-weight:700;color:#4361ee;margin-bottom:6px;">💰 총 인상 비용</div>'+
+        '<div style="font-size:22px;font-weight:800;color:#4361ee;margin-bottom:2px;">'+fmtM(tr)+'<span style="font-size:12px;">만원</span></div>'+
+        '<div style="font-size:9px;color:#7a8599;">직접인상 '+fmtM(directIncrease)+' + 보험 '+fmtM(insIncrease)+' + 퇴직금 '+fmtM(retireIncrease)+'</div>'+
+        '<div style="margin-top:8px;height:6px;background:#dde4f7;border-radius:3px;"><div style="height:100%;background:#4361ee;border-radius:3px;width:'+rBar+'%;"></div></div>'+
+      '</div>'+
+      '<div style="background:#fff5f5;border-radius:12px;padding:14px;">'+
+        '<div style="font-size:10px;font-weight:700;color:#c92a2a;margin-bottom:6px;">🚪 총 이탈 비용</div>'+
+        '<div style="font-size:22px;font-weight:800;color:#c92a2a;margin-bottom:2px;">'+fmtM(at)+'<span style="font-size:12px;">만원</span></div>'+
+        '<div style="font-size:9px;color:#7a8599;">채용·공백·생산성·인계 비용 합산</div>'+
+        '<div style="margin-top:8px;height:6px;background:#ffd5d5;border-radius:3px;"><div style="height:100%;background:#ff6b6b;border-radius:3px;width:'+aBar+'%;"></div></div>'+
+      '</div>'+
+      '<div style="background:'+(diff>0?'#ebfbee':diff>-1000000?'#fff9db':'#fff5f5')+';border-radius:12px;padding:14px;">'+
+        '<div style="font-size:10px;font-weight:700;color:'+(diff>0?'#2b8a3e':diff>-1000000?'#e67700':'#c92a2a')+';margin-bottom:6px;">'+(diff>0?'✅ 순 절감액':'⚠️ 초과 비용')+'</div>'+
+        '<div style="font-size:22px;font-weight:800;color:'+(diff>0?'#2b8a3e':'#c92a2a')+';margin-bottom:2px;">'+(diff>0?'+':'')+fmtM(diff)+'<span style="font-size:12px;">만원</span></div>'+
+        '<div style="font-size:9px;color:#7a8599;">'+(diff>0?'인상 시 이만큼 비용 절감':'이탈 대비 인상 초과 금액')+'</div>'+
+        '<div style="margin-top:8px;font-size:11px;font-weight:700;color:'+(diff>0?'#2b8a3e':'#c92a2a')+'">'+(at>0?'이탈비 대비 '+(diff>0?savingsRate+'% 절감':Math.abs(savingsRate)+'% 초과'):'—')+'</div>'+
+      '</div>'+
     '</div>'+
-    '<div style="margin:10px 0 4px;"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;"><span style="color:#2b8a3e;font-weight:600;">급여 인상 비용</span><span>'+fmt(tr)+'원</span></div><div style="height:12px;border-radius:6px;background:#f1f3f5;overflow:hidden;"><div style="height:100%;background:#51cf66;width:'+rpct+'%;border-radius:6px;"></div></div></div>'+
-    '<div style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;"><span style="color:#c92a2a;font-weight:600;">이탈 비용</span><span>'+fmt(at)+'원</span></div><div style="height:12px;border-radius:6px;background:#f1f3f5;overflow:hidden;"><div style="height:100%;background:#ff6b6b;width:'+apct+'%;border-radius:6px;"></div></div></div>'+
-    '<div style="background:'+vBg+';border-radius:12px;padding:14px;text-align:center;"><div style="font-size:16px;font-weight:700;color:'+vCol+';margin-bottom:6px;">'+vTitle+'</div><div style="font-size:12px;color:'+vCol+';line-height:1.8;">'+vDesc+'</div></div></div>'+
-    '<div class="card"><div class="card-title">인상 비용 상세</div><div class="metric-grid metric-grid-3">'+
-      '<div class="metric green"><div class="ml">직접 인상액</div><div class="mv">'+fmt(directIncrease)+'</div><div class="ms">원/년</div></div>'+
-      '<div class="metric amber"><div class="ml">4대보험 추가</div><div class="mv">'+fmt(insIncrease)+'</div><div class="ms">원/년</div></div>'+
-      '<div class="metric amber"><div class="ml">퇴직금 증가</div><div class="mv">'+fmt(retireIncrease)+'</div><div class="ms">원</div></div>'+
-    '</div></div>'+listTable;
+    // 직원별 피드백 테이블
+    (employees.length>0?
+      '<div style="font-size:12px;font-weight:700;color:#243041;margin-bottom:8px;">직원별 상세 분석</div>'+
+      '<div style="overflow-x:auto;">'+
+      '<table class="ins-table" style="min-width:640px;">'+
+        '<thead><tr>'+
+          '<th>직원</th>'+
+          '<th style="text-align:right;">현재 연봉</th>'+
+          '<th style="text-align:center;">인상률</th>'+
+          '<th style="text-align:right;">인상 비용</th>'+
+          '<th style="text-align:right;">이탈 비용</th>'+
+          '<th style="text-align:center;">비용 효율<br><span style="font-weight:400;font-size:9px;">이탈/인상</span></th>'+
+          '<th style="text-align:right;">차이</th>'+
+          '<th>판정</th>'+
+        '</tr></thead>'+
+        '<tbody>'+feedbackRows+'</tbody>'+
+        '<tfoot><tr style="background:#f0f3ff;font-weight:700;">'+
+          '<td colspan="3">전체 합계</td>'+
+          '<td style="text-align:right;color:#4361ee;">'+fmt(tr)+'</td>'+
+          '<td style="text-align:right;color:#c92a2a;">'+fmt(at)+'</td>'+
+          '<td style="text-align:center;">'+(at>0?Math.round(at/tr*100)+'%':'—')+'</td>'+
+          '<td style="text-align:right;color:'+(diff>=0?'#2b8a3e':'#c92a2a')+';">'+(diff>=0?'+':'')+fmt(diff)+'</td>'+
+          '<td></td>'+
+        '</tr></tfoot>'+
+      '</table></div>'
+    : '<div style="font-size:11px;color:#868e96;padding:12px;text-align:center;">직원을 추가하면 여기에 개별 분석이 표시됩니다.</div>')+
+    '</div>';
+
+  document.getElementById('bep-result').innerHTML=summaryHtml;
 }
 
-/* ======================================================
-   ⑤ 보고서
-====================================================== */
 function buildReport(){
   var wrap=document.getElementById('report-result');
   if(!state.pos&&!state.ins&&!state.bep){
-    wrap.innerHTML='<div class="card"><div class="section-note">① ~ ④ 탭에서 모든 값을 입력하면 자동으로 종합 보고서가 생성됩니다.</div></div>';
+    wrap.innerHTML='<div class="card" style="text-align:center;padding:32px;"><div style="font-size:40px;margin-bottom:12px;">📋</div><div style="font-size:14px;font-weight:700;color:#243041;margin-bottom:6px;">아직 입력된 데이터가 없습니다</div><div style="font-size:12px;color:#868e96;">① 업계 포지셔닝부터 순서대로 입력하면<br>여기에 자동으로 보고서가 완성됩니다.</div></div>';
     return;
   }
   var now=new Date();
   var dateStr=now.getFullYear()+'년 '+(now.getMonth()+1)+'월 '+now.getDate()+'일';
+
+  // ─── 공통 변수 ───
+  var diff=state.bep?state.bep.diff:0;
+  var tr=state.bep?state.bep.totalRaise:0;
+  var at=state.bep?state.bep.attrTotal:0;
+  var sal=state.pos?state.pos.sal:0;
+  var d=state.pos?state.pos.d:null;
+  var pct=state.pos?state.pos.pct:0;
+  var vCol=diff>0?'#2b8a3e':diff>-1000000?'#e67700':'#c92a2a';
+  var vBg=diff>0?'#ebfbee':diff>-1000000?'#fff9db':'#fff5f5';
+  var vIcon=diff>0?'✅':diff>-1000000?'⚖️':'⚠️';
+  var vTitle=diff>0?'급여 인상 권고':diff>-1000000?'손익분기 — 신중 검토':'비용 초과 — 재검토 필요';
+
   var html='';
-  html+='<button class="pdf-btn" onclick="window.print()">'+
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'+
-    '보고서 인쇄 · PDF 저장';
-  html+='</button>';
-  html+='<div class="report-header"><h1>📊 EPCM 연봉협상 의사결정 보고서</h1><p>생성일: '+dateStr+' | 2026 최저임금 '+fmt(MIN_HOURLY)+'원/시 (+'+MIN_RAISE_RATE+'%) 적용</p></div>';
 
+  // ── PDF 버튼 ──
+  html+='<button class="pdf-btn" onclick="window.print()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>PDF 저장</button>';
+
+  // ── 보고서 헤더 ──
+  html+='<div class="report-header"><div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;"><div><h1>📊 연봉협상 의사결정 보고서</h1><p>'+dateStr+(state.pos?' | '+state.pos.ind+' · '+state.pos.jlabel:'')+'</p></div><div style="text-align:right;font-size:11px;opacity:.6;">EPCM 시스템</div></div></div>';
+
+  // ════════════════════════════════
+  // SECTION A — 결론 요약 (가장 먼저)
+  // ════════════════════════════════
+  html+='<div style="background:'+vBg+';border:2px solid '+vCol+';border-radius:18px;padding:0;margin-bottom:14px;overflow:hidden;">';
+  // 결론 헤더
+  html+='<div style="background:'+vCol+';padding:14px 20px;display:flex;align-items:center;gap:12px;">';
+  html+='<div style="font-size:28px;">'+vIcon+'</div>';
+  html+='<div><div style="font-size:10px;color:rgba(255,255,255,.75);font-weight:700;letter-spacing:.08em;margin-bottom:2px;">최종 결론</div>';
+  html+='<div style="font-size:20px;font-weight:900;color:#fff;">'+vTitle+'</div></div>';
+  html+='</div>';
+  // 3줄 핵심 수치
   if(state.pos&&state.bep){
-    html+='<div class="report-kpi-grid">'+
-      '<div class="report-kpi"><div class="rk-label">업계 포지셔닝</div><div class="rk-value" style="font-size:15px;color:'+(state.pos.pct<25?'#c92a2a':state.pos.pct<75?'#e67700':'#2b8a3e')+'">'+state.pos.verdict+'</div><div class="rk-sub">업계 기준 비교</div></div>'+
-      '<div class="report-kpi"><div class="rk-label">현재 연봉</div><div class="rk-value">'+fmtM(state.pos.sal)+'</div><div class="rk-sub">만원</div></div>'+
-      '<div class="report-kpi"><div class="rk-label">급여 인상 총비용</div><div class="rk-value" style="color:#2b8a3e;">'+fmtM(state.bep.totalRaise)+'</div><div class="rk-sub">만원</div></div>'+
-      '<div class="report-kpi"><div class="rk-label">이탈 비용</div><div class="rk-value" style="color:#c92a2a;">'+fmtM(state.bep.attrTotal)+'</div><div class="rk-sub">만원</div></div>'+
-    '</div>';
+    // 5% 인상 후 포지션 계산
+    var sal5=Math.round(sal*1.05);
+    var pct5=calcPosPercent(sal5,d);
+    var v5=posVerdict(pct5);
+    var vNow=posVerdict(pct);
+
+    html+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid rgba(0,0,0,.06);">';
+    var kpis=[
+      {l:'현재 연봉',v:fmtM(sal)+'만원',sub:'',c:'#243041'},
+      {l:'업계 포지션',v:state.pos.verdict,sub:pct+'% 구간',c:pct<25?'#c92a2a':pct<75?'#e67700':'#2b8a3e'},
+      {l:'인상 총비용',v:fmtM(tr)+'만원',sub:'직접+보험+퇴직금',c:'#4361ee'},
+      {l:diff>0?'절감 기대액':'초과 비용',v:(diff>0?'+':'')+fmtM(diff)+'만원',sub:diff>0?'이탈 대비 절감':'인상>이탈 차이',c:vCol}
+    ];
+    kpis.forEach(function(k,i){
+      html+='<div style="padding:14px 16px;border-right:'+(i<3?'1px solid rgba(0,0,0,.06)':'none')+';background:rgba(255,255,255,.55);">';
+      html+='<div style="font-size:9px;font-weight:700;color:#868e96;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">'+k.l+'</div>';
+      html+='<div style="font-size:16px;font-weight:800;color:'+k.c+';">'+k.v+'</div>';
+      html+='<div style="font-size:9px;color:#868e96;margin-top:2px;">'+k.sub+'</div>';
+      html+='</div>';
+    });
+    html+='</div>';
+
+    // 포지션 변화 비교 바
+    html+='<div style="background:rgba(255,255,255,.7);border-top:1px solid rgba(0,0,0,.06);padding:14px 18px;">';
+    html+='<div style="font-size:9px;font-weight:700;color:#868e96;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;">업계 포지션 변화 (5% 인상 시)</div>';
+    // 바 SVG 인라인
+    var BW=100; // 전체 바 너비 %
+    var nowPosX=Math.max(2,Math.min(96,pct));
+    var aftPosX=Math.max(2,Math.min(96,pct5));
+    html+='<div style="position:relative;height:20px;border-radius:10px;overflow:hidden;background:linear-gradient(to right,#ff8787 0%,#ff8787 25%,#ffd43b 25%,#ffd43b 75%,#69db7c 75%,#69db7c 100%);margin-bottom:8px;">';
+    // 현재 위치 원
+    html+='<div style="position:absolute;top:50%;left:'+nowPosX+'%;transform:translate(-50%,-50%);width:16px;height:16px;border-radius:50%;background:#4361ee;border:2.5px solid #fff;box-shadow:0 1px 6px rgba(67,97,238,.4);z-index:2;"></div>';
+    // 인상 후 위치 원
+    html+='<div style="position:absolute;top:50%;left:'+aftPosX+'%;transform:translate(-50%,-50%);width:16px;height:16px;border-radius:50%;background:#f76707;border:2.5px solid #fff;box-shadow:0 1px 6px rgba(247,103,7,.4);z-index:3;"></div>';
+    html+='</div>';
+    // 레이블 행
+    html+='<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">';
+    html+='<div style="display:flex;align-items:center;gap:6px;">';
+    html+='<div style="width:12px;height:12px;border-radius:50%;background:#4361ee;border:2px solid #fff;box-shadow:0 1px 4px rgba(67,97,238,.3);flex-shrink:0;"></div>';
+    html+='<div><div style="font-size:10px;font-weight:700;color:#4361ee;">현재 '+fmtM(sal)+'만</div>';
+    html+='<div style="font-size:9px;color:'+vNow.col+';font-weight:600;">'+vNow.text+' ('+Math.round(pct)+'%)</div></div></div>';
+    // 화살표
+    html+='<div style="font-size:16px;color:#adb5bd;">→</div>';
+    html+='<div style="display:flex;align-items:center;gap:6px;">';
+    html+='<div style="width:12px;height:12px;border-radius:50%;background:#f76707;border:2px solid #fff;box-shadow:0 1px 4px rgba(247,103,7,.3);flex-shrink:0;"></div>';
+    html+='<div><div style="font-size:10px;font-weight:700;color:#f76707;">5% 인상 후 '+fmtM(sal5)+'만</div>';
+    html+='<div style="font-size:9px;color:'+v5.col+';font-weight:600;">'+v5.text+' ('+Math.round(pct5)+'%)</div></div></div>';
+    // 변화 여부
+    if(vNow.text===v5.text){
+      html+='<div style="margin-left:auto;font-size:10px;color:#868e96;background:#f1f3f5;padding:3px 10px;border-radius:6px;">구간 유지</div>';
+    } else {
+      html+='<div style="margin-left:auto;font-size:10px;font-weight:700;color:'+v5.col+';background:'+v5.bg+';padding:3px 10px;border-radius:6px;">'+vNow.text+' → '+v5.text+'</div>';
+    }
+    html+='</div></div>';
+  }
+  html+='</div>';
+
+  // ════════════════════════════════
+  // SECTION B — 3개 시각화 카드 (한 줄)
+  // ════════════════════════════════
+  if(state.pos&&state.bep&&d){
+    var maxBar=Math.max(tr,at,1);
+    var rPct=Math.round(tr/maxBar*100);
+    var aPct=Math.round(at/maxBar*100);
+
+    // B-1: 업계 포지션 게이지 (SVG)
+    var gaugeSvg=buildReportGaugeSvg(pct,sal,d);
+    // B-2: 비용 대결 바 (SVG)
+    var costSvg=buildReportCostSvg(tr,at,diff);
+    // B-3: 인상 시나리오 표
+    var scenarioHtml=buildReportScenario(sal,d);
+
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px;">';
+    // 포지션 카드
+    html+='<div class="report-section" style="margin-bottom:0;">';
+    html+='<div style="font-size:11px;font-weight:800;color:#243041;margin-bottom:10px;display:flex;align-items:center;gap:6px;">📍 업계 포지션</div>';
+    html+=gaugeSvg;
+    html+='</div>';
+    // 비용 대결 카드
+    html+='<div class="report-section" style="margin-bottom:0;">';
+    html+='<div style="font-size:11px;font-weight:800;color:#243041;margin-bottom:10px;">⚖️ 인상 vs 이탈 비용</div>';
+    html+=costSvg;
+    html+='</div>';
+    // 시나리오 카드
+    html+='<div class="report-section" style="margin-bottom:0;">';
+    html+='<div style="font-size:11px;font-weight:800;color:#243041;margin-bottom:10px;">📈 인상률 시나리오</div>';
+    html+=scenarioHtml;
+    html+='</div>';
+    html+='</div>';
   }
 
-  if(state.pos){
-    var d=state.pos.d;
-    html+='<div class="report-section"><div class="report-section-title">📍 ① 업계 포지셔닝</div>'+
-      '<div class="report-2col">'+
-        '<div><table class="report-table"><thead><tr><th>구분</th><th>금액</th><th>비고</th></tr></thead><tbody>'+
-          '<tr><td>현재 연봉</td><td style="font-weight:700;color:#4361ee;">'+fmt(state.pos.sal)+'원</td><td>'+state.pos.verdict+'</td></tr>'+
-          '<tr><td>업계 평균</td><td>'+fmt(d.avg)+'원</td><td>'+state.pos.ind+' '+state.pos.jlabel+'</td></tr>'+
-          '<tr><td>하위 25%</td><td>'+fmt(d.low)+'원</td><td></td></tr>'+
-          '<tr><td>중위 50%</td><td>'+fmt(d.mid)+'원</td><td></td></tr>'+
-          '<tr><td>상위 25%</td><td>'+fmt(d.high)+'원</td><td></td></tr>'+
-          '<tr style="background:#f0f3ff;"><td>평균 대비</td><td style="font-weight:700;color:'+(d.avg-state.pos.sal>0?'#c92a2a':'#2b8a3e')+'">'+(d.avg-state.pos.sal>0?'-':'+')+fmt(Math.abs(d.avg-state.pos.sal))+'원</td><td>'+(d.avg-state.pos.sal>0?'인상 필요':'경쟁력 있음')+'</td></tr>'+
-        '</tbody></table></div>'+
-        '<div><div style="background:#f8f9fa;border-radius:12px;padding:14px;">'+
-          '<div style="font-size:11px;font-weight:700;margin-bottom:8px;color:#495057;">포지셔닝 게이지</div>'+
-          '<div style="position:relative;height:20px;border-radius:10px;overflow:hidden;background:linear-gradient(to right,#ff6b6b 0%,#ff6b6b 25%,#ffd43b 25%,#ffd43b 75%,#51cf66 75%,#51cf66 100%);">'+
-            '<div style="position:absolute;top:50%;transform:translateY(-50%);left:'+state.pos.pct+'%;margin-left:-6px;width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:14px solid #1a1a2e;"></div>'+
-          '</div>'+
-          '<div style="display:flex;justify-content:space-between;font-size:9px;color:#868e96;margin-top:4px;"><span>'+fmtM(d.low)+'</span><span>중위'+fmtM(d.mid)+'</span><span>'+fmtM(d.high)+'</span></div>'+
-          '<div style="text-align:center;margin-top:10px;padding:8px;background:#fff;border-radius:8px;"><div style="font-size:12px;font-weight:700;">'+state.pos.verdict+'</div></div>'+
-        '</div></div>'+
-      '</div></div>';
-  }
-
+  // ════════════════════════════════
+  // SECTION C — 4대보험 상세 (접은 형태)
+  // ════════════════════════════════
   if(state.ins){
     var ins=state.ins.ins;
-    html+='<div class="report-section"><div class="report-section-title">🛡️ ② 4대보험 부담 현황</div>'+
-      '<div class="report-2col">'+
-        '<div><table class="report-table"><thead><tr><th>항목</th><th>사업주(월)</th><th>근로자(월)</th></tr></thead><tbody>'+
-          '<tr><td>국민연금</td><td>'+fmt(ins.pension)+'원</td><td>'+fmt(ins.workerPension)+'원</td></tr>'+
-          '<tr><td>건강보험</td><td>'+fmt(ins.health)+'원</td><td>'+fmt(ins.workerHealth)+'원</td></tr>'+
-          '<tr><td>장기요양보험</td><td>'+fmt(ins.ltc)+'원</td><td>'+fmt(ins.workerLtc)+'원</td></tr>'+
-          '<tr><td>고용보험</td><td>'+fmt(ins.employ)+'원</td><td>'+fmt(ins.workerEmploy)+'원</td></tr>'+
-          '<tr><td>산재보험</td><td>'+fmt(ins.accident)+'원</td><td>—</td></tr>'+
-          '<tr class="tr-total"><td>합계</td><td style="color:#c92a2a;">'+fmt(ins.totalCo)+'원</td><td style="color:#1864ab;">'+fmt(ins.totalW)+'원</td></tr>'+
-        '</tbody></table></div>'+
-        '<div><div style="background:#f8f9fa;border-radius:12px;padding:14px;">'+
-          '<div style="font-size:11px;font-weight:700;margin-bottom:10px;">인상 시 연간 추가 부담</div>'+
-          '<div style="margin-bottom:8px;"><div style="font-size:10px;display:flex;justify-content:space-between;margin-bottom:3px;"><span>직접 인상액</span><span>'+fmt(state.ins.raiseAmount)+'원</span></div><div style="height:8px;border-radius:4px;overflow:hidden;background:#e9ecef;"><div style="height:100%;background:#4361ee;width:'+Math.round(state.ins.raiseAmount/Math.max(state.ins.totalAnnualIncrease,1)*100)+'%;"></div></div></div>'+
-          '<div style="margin-bottom:8px;"><div style="font-size:10px;display:flex;justify-content:space-between;margin-bottom:3px;"><span>보험료 증가</span><span>'+fmt(state.ins.insuranceIncrease)+'원</span></div><div style="height:8px;border-radius:4px;overflow:hidden;background:#e9ecef;"><div style="height:100%;background:#f76707;width:'+Math.round(state.ins.insuranceIncrease/Math.max(state.ins.totalAnnualIncrease,1)*100)+'%;"></div></div></div>'+
-          '<div style="margin-bottom:12px;"><div style="font-size:10px;display:flex;justify-content:space-between;margin-bottom:3px;"><span>퇴직금 증가</span><span>'+fmt(state.ins.retirementIncrease)+'원</span></div><div style="height:8px;border-radius:4px;overflow:hidden;background:#e9ecef;"><div style="height:100%;background:#ffd43b;width:'+Math.round(state.ins.retirementIncrease/Math.max(state.ins.totalAnnualIncrease,1)*100)+'%;"></div></div></div>'+
-          '<div style="background:#1a1a2e;border-radius:8px;padding:10px;text-align:center;"><div style="font-size:9px;color:#adb5bd;margin-bottom:2px;">연간 추가 총부담</div><div style="font-size:18px;font-weight:700;color:#ffd43b;">'+fmt(state.ins.totalAnnualIncrease)+'원</div></div>'+
-        '</div></div>'+
-      '</div></div>';
+    var totalCo=ins.totalCo, totalW=ins.totalW;
+    var annualExtra=state.ins.totalAnnualIncrease;
+    html+='<div class="report-section">';
+    html+='<div style="font-size:11px;font-weight:800;color:#243041;margin-bottom:12px;">🛡️ 4대보험 부담 현황</div>';
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">';
+    // 월 보험료
+    html+='<div>';
+    html+='<div style="font-size:10px;font-weight:700;color:#495057;margin-bottom:6px;">월 보험료 (1인 기준)</div>';
+    var insItems=[
+      {l:'국민연금',co:ins.pension,wo:ins.workerPension},
+      {l:'건강+장기요양',co:ins.health+ins.ltc,wo:ins.workerHealth+ins.workerLtc},
+      {l:'고용보험',co:ins.employ,wo:ins.workerEmploy},
+      {l:'산재보험',co:ins.accident,wo:0}
+    ];
+    insItems.forEach(function(item){
+      var total=item.co+item.wo;
+      var barW=totalCo>0?Math.round(item.co/totalCo*100):0;
+      html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">';
+      html+='<div style="font-size:10px;color:#495057;width:90px;flex-shrink:0;">'+item.l+'</div>';
+      html+='<div style="flex:1;height:8px;background:#e9ecef;border-radius:4px;overflow:hidden;"><div style="height:100%;background:#4361ee;border-radius:4px;width:'+barW+'%;"></div></div>';
+      html+='<div style="font-size:10px;color:#c92a2a;font-weight:600;width:60px;text-align:right;">'+fmt(item.co)+'</div>';
+      html+='</div>';
+    });
+    html+='<div style="border-top:1px solid #e9ecef;padding-top:6px;margin-top:2px;display:flex;justify-content:space-between;font-size:10px;font-weight:700;"><span>사업주 월 합계</span><span style="color:#c92a2a;">'+fmt(totalCo)+'원</span></div>';
+    html+='</div>';
+    // 인상 시 추가 부담
+    html+='<div style="background:#f8f9fa;border-radius:12px;padding:12px;">';
+    html+='<div style="font-size:10px;font-weight:700;color:#495057;margin-bottom:10px;">5% 인상 시 연간 추가 부담</div>';
+    var costItems=[
+      {l:'직접 인상액',v:state.ins.raiseAmount,c:'#4361ee'},
+      {l:'보험료 증가',v:state.ins.insuranceIncrease,c:'#f76707'},
+      {l:'퇴직금 증가',v:state.ins.retirementIncrease,c:'#ffd43b'}
+    ];
+    costItems.forEach(function(ci){
+      var bw=annualExtra>0?Math.round(ci.v/annualExtra*100):0;
+      html+='<div style="margin-bottom:8px;">';
+      html+='<div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px;"><span>'+ci.l+'</span><span style="font-weight:700;">+'+fmt(ci.v)+'원</span></div>';
+      html+='<div style="height:6px;background:#e9ecef;border-radius:3px;overflow:hidden;"><div style="height:100%;background:'+ci.c+';border-radius:3px;width:'+bw+'%;"></div></div>';
+      html+='</div>';
+    });
+    html+='<div style="background:#1a1a2e;border-radius:8px;padding:10px;text-align:center;margin-top:6px;">';
+    html+='<div style="font-size:9px;color:#adb5bd;margin-bottom:2px;">연간 추가 총부담</div>';
+    html+='<div style="font-size:18px;font-weight:800;color:#ffd43b;">+'+fmtM(annualExtra)+'만원</div>';
+    html+='</div></div></div></div>';
   }
 
+  // ════════════════════════════════
+  // SECTION D — 이탈비용 상세 (필요시만)
+  // ════════════════════════════════
   if(state.attr&&state.bep){
-    var diff=state.bep.diff;
-    html+='<div class="report-section"><div class="report-section-title">⚖️ ③ 이탈 비용 vs 인상 비용</div>'+
-      '<div class="report-2col">'+
-        '<div><table class="report-table"><thead><tr><th>항목</th><th>금액</th><th>비율</th></tr></thead><tbody>'+
-          '<tr><td>채용비</td><td>'+fmt(state.attr.recruit)+'원</td><td>'+Math.round(state.attr.recruit/Math.max(state.attr.total,1)*100)+'%</td></tr>'+
-          '<tr><td>공백비</td><td>'+fmt(state.attr.gap)+'원</td><td>'+Math.round(state.attr.gap/Math.max(state.attr.total,1)*100)+'%</td></tr>'+
-          '<tr><td>생산성 손실</td><td>'+fmt(state.attr.prod)+'원</td><td>'+Math.round(state.attr.prod/Math.max(state.attr.total,1)*100)+'%</td></tr>'+
-          '<tr><td>인수인계</td><td>'+fmt(state.attr.handover)+'원</td><td>'+Math.round(state.attr.handover/Math.max(state.attr.total,1)*100)+'%</td></tr>'+
-          (state.attr.extraTotal>0?'<tr><td>기타 항목</td><td>'+fmt(state.attr.extraTotal)+'원</td><td>'+Math.round(state.attr.extraTotal/Math.max(state.attr.total,1)*100)+'%</td></tr>':'')+
-          '<tr class="tr-total"><td>이탈 비용 합계</td><td style="color:#c92a2a;">'+fmt(state.bep.attrTotal)+'원</td><td></td></tr>'+
-          '<tr style="background:#ebfbee;"><td>급여 인상 총비용</td><td style="color:#2b8a3e;font-weight:700;">'+fmt(state.bep.totalRaise)+'원</td><td></td></tr>'+
-          '<tr style="background:'+(diff>0?'#e7f5ff':'#fff5f5')+';"><td><strong>순 절감액</strong></td><td style="font-weight:700;color:'+(diff>0?'#1864ab':'#c92a2a')+'">'+(diff>0?'+':'')+fmt(diff)+'원</td><td>'+(diff>0?'✅ 권고':'⚠️ 검토')+'</td></tr>'+
-        '</tbody></table></div>'+
-        '<div><div style="background:'+(diff>0?'#ebfbee':diff>-1000000?'#fff9db':'#fff5f5')+';border-radius:12px;padding:16px;height:100%;display:flex;flex-direction:column;justify-content:center;">'+
-          '<div style="font-size:18px;font-weight:700;color:'+(diff>0?'#2b8a3e':diff>-1000000?'#e67700':'#c92a2a')+';text-align:center;margin-bottom:10px;">'+(diff>0?'✅ 급여 인상 권고':diff>-1000000?'⚖️ 손익분기점':'⚠️ 비용 검토')+'</div>'+
-          '<div style="font-size:10px;margin-bottom:4px;display:flex;justify-content:space-between;"><span>인상 비용</span><span>'+fmt(state.bep.totalRaise)+'원</span></div>'+
-          '<div style="height:8px;border-radius:4px;overflow:hidden;background:#fff;margin-bottom:8px;"><div style="height:100%;background:#51cf66;width:'+Math.round(state.bep.totalRaise/Math.max(state.bep.totalRaise,state.bep.attrTotal)*100)+'%;"></div></div>'+
-          '<div style="font-size:10px;margin-bottom:4px;display:flex;justify-content:space-between;"><span>이탈 비용</span><span>'+fmt(state.bep.attrTotal)+'원</span></div>'+
-          '<div style="height:8px;border-radius:4px;overflow:hidden;background:#fff;"><div style="height:100%;background:#ff6b6b;width:'+Math.round(state.bep.attrTotal/Math.max(state.bep.totalRaise,state.bep.attrTotal)*100)+'%;"></div></div>'+
-          '<div style="text-align:center;margin-top:12px;padding:8px;background:rgba(255,255,255,.7);border-radius:8px;"><strong style="font-size:14px;color:'+(diff>0?'#2b8a3e':'#c92a2a')+'">'+(diff>0?'+':'')+fmt(diff)+'원 차이</strong></div>'+
-        '</div></div>'+
-      '</div></div>';
-  }
-
-  if(state.bep){
-    var diff=state.bep.diff;
-    var rec=diff>0?'급여 인상을 권고합니다. '+(state.pos&&state.pos.pct<25?'업계 하위권으로 이탈 리스크가 높습니다. 적극적 보상 조정이 필요합니다.':state.pos&&state.pos.pct<50?'하위~중위권입니다. 핵심 인력 중심 선택적 인상이 적절합니다.':state.pos&&state.pos.pct<75?'중위권입니다. 핵심 인력 유지 목적 차등 인상을 권고합니다.':'상위권이지만 이탈 비용이 높아 선택적 인상 검토가 필요합니다.'):'선택적 차등 인상 또는 비금전적 보상 병행을 검토하세요. 전면 인상보다 직원별 타겟 보상이 비용 효율적입니다.';
-    var minWarn=state.pos&&state.pos.sal<MIN_ANNUAL?'<div style="background:#fff5f5;border:1px solid #ffcdd2;border-radius:8px;padding:10px;margin-bottom:10px;font-size:11px;color:#c92a2a;"><strong>⚠️ 최저임금 위반 가능성:</strong> 현재 연봉 '+fmt(state.pos.sal)+'원 → 2026년 법정 최저임금 기준 연 '+fmt(MIN_ANNUAL)+'원 미달. 즉시 조정 필요.</div>':'';
-    html+='<div class="report-section" style="border:2px solid #ffd43b;"><div class="report-section-title">🎯 최종 권고안</div>'+minWarn+
-      '<div style="background:#fff9db;border-radius:10px;padding:14px;font-size:13px;line-height:2;color:#7d4e00;margin-bottom:12px;">'+rec+'</div>'+
-      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">'+
-        '<div class="report-kpi"><div class="rk-label">기준 인상 시나리오</div><div class="rk-value" style="color:#e67700;font-size:18px;">5%</div><div class="rk-sub">기본 시뮬레이션 기준</div></div>'+
-        '<div class="report-kpi"><div class="rk-label">기준 인상 후 연봉</div><div class="rk-value" style="font-size:15px;">'+(state.pos?fmt(Math.round(state.pos.sal*1.05)):'—')+'원</div><div class="rk-sub">5% 적용 시</div></div>'+
-        '<div class="report-kpi"><div class="rk-label">손익분기 판단</div><div class="rk-value" style="font-size:14px;color:'+(diff>0?'#2b8a3e':'#c92a2a')+'">'+(diff>0?'인상 권고':'검토 필요')+'</div><div class="rk-sub">이탈비용 vs 인상비용</div></div>'+
-      '</div></div>';
+    var diff2=state.bep.diff;
+    var attrItems=[
+      {l:'채용비',v:state.attr.recruit},
+      {l:'공백비',v:state.attr.gap},
+      {l:'생산성 손실',v:state.attr.prod},
+      {l:'인수인계',v:state.attr.handover}
+    ];
+    if(state.attr.extraItems){
+      state.attr.extraItems.forEach(function(e){
+        if(e.value>0) attrItems.push({l:e.name||'기타',v:e.value});
+      });
+    }
+    var attrTotal=state.attr.total;
+    html+='<div class="report-section">';
+    html+='<div style="font-size:11px;font-weight:800;color:#243041;margin-bottom:12px;">🚪 이탈 비용 내역</div>';
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;">';
+    // 가로 바 차트
+    html+='<div>';
+    attrItems.forEach(function(item){
+      var bw=attrTotal>0?Math.round(item.v/attrTotal*100):0;
+      html+='<div style="margin-bottom:9px;">';
+      html+='<div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px;"><span style="color:#495057;">'+item.l+'</span><span style="font-weight:700;">'+fmt(item.v)+'원 <span style="color:#adb5bd;font-weight:400;">('+bw+'%)</span></span></div>';
+      html+='<div style="height:8px;background:#f1f3f5;border-radius:4px;overflow:hidden;"><div style="height:100%;background:linear-gradient(90deg,#ff8787,#ffc9c9);border-radius:4px;width:'+bw+'%;"></div></div>';
+      html+='</div>';
+    });
+    html+='<div style="border-top:2px solid #dee2e6;padding-top:8px;display:flex;justify-content:space-between;font-size:11px;font-weight:800;"><span>총 이탈 비용</span><span style="color:#c92a2a;">'+fmt(attrTotal)+'원</span></div>';
+    html+='</div>';
+    // 판정 박스
+    html+='<div style="background:'+(diff2>0?'#ebfbee':diff2>-1000000?'#fff9db':'#fff5f5')+';border-radius:12px;padding:16px;text-align:center;">';
+    html+='<div style="font-size:28px;margin-bottom:8px;">'+(diff2>0?'✅':diff2>-1000000?'⚖️':'⚠️')+'</div>';
+    html+='<div style="font-size:12px;font-weight:700;color:'+vCol+';margin-bottom:12px;">'+(diff2>0?'인상이 더 경제적':diff2>-1000000?'손익분기 구간':'이탈이 더 경제적')+'</div>';
+    html+='<div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px;"><span style="color:#4361ee;">💰 인상 비용</span><span style="font-weight:700;">'+fmtM(tr)+'만원</span></div>';
+    html+='<div style="height:6px;background:#e9ecef;border-radius:3px;overflow:hidden;margin-bottom:10px;"><div style="height:100%;background:#4361ee;border-radius:3px;width:'+Math.round(tr/Math.max(tr,at)*100)+'%;"></div></div>';
+    html+='<div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px;"><span style="color:#c92a2a;">🚪 이탈 비용</span><span style="font-weight:700;">'+fmtM(at)+'만원</span></div>';
+    html+='<div style="height:6px;background:#e9ecef;border-radius:3px;overflow:hidden;margin-bottom:12px;"><div style="height:100%;background:#ff6b6b;border-radius:3px;width:'+Math.round(at/Math.max(tr,at)*100)+'%;"></div></div>';
+    html+='<div style="background:rgba(255,255,255,.8);border-radius:8px;padding:8px;">';
+    html+='<div style="font-size:10px;color:#868e96;margin-bottom:2px;">차이</div>';
+    html+='<div style="font-size:18px;font-weight:800;color:'+vCol+';">'+(diff2>0?'+':'')+fmtM(diff2)+'만원</div>';
+    html+='</div></div>';
+    html+='</div></div>';
   }
 
   wrap.innerHTML=html;
+}
+
+// ── 보고서용 SVG 게이지 ──
+function buildReportGaugeSvg(pct,sal,d){
+  var W=240,H=90;
+  var bx=10,bw=W-20,bh=16,by=40;
+  var markerX=bx+Math.round(bw*pct/100);
+  var markerX=Math.max(bx+6,Math.min(bx+bw-6,markerX));
+  var v=posVerdict(pct);
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;display:block;font-family:\'Malgun Gothic\',sans-serif;">';
+  svg+='<defs><clipPath id="gc"><rect x="'+bx+'" y="'+by+'" width="'+bw+'" height="'+bh+'" rx="8"/></clipPath></defs>';
+  svg+='<rect x="'+bx+'" y="'+by+'" width="'+(bw*.25)+'" height="'+bh+'" fill="#ff8787" clip-path="url(#gc)"/>';
+  svg+='<rect x="'+(bx+bw*.25)+'" y="'+by+'" width="'+(bw*.5)+'" height="'+bh+'" fill="#ffd43b" clip-path="url(#gc)"/>';
+  svg+='<rect x="'+(bx+bw*.75)+'" y="'+by+'" width="'+(bw*.25)+'" height="'+bh+'" fill="#51cf66" clip-path="url(#gc)"/>';
+  svg+='<circle cx="'+markerX+'" cy="'+(by+bh/2)+'" r="9" fill="'+v.col+'" stroke="#fff" stroke-width="2.5"/>';
+  svg+='<text x="'+markerX+'" y="'+(by-8)+'" text-anchor="middle" font-size="9" font-weight="bold" fill="'+v.col+'">'+fmtM(sal)+'</text>';
+  svg+='<text x="'+(bx+bw*.125)+'" y="'+(by+bh+13)+'" text-anchor="middle" font-size="8" fill="#999">하위</text>';
+  svg+='<text x="'+(bx+bw*.5)+'" y="'+(by+bh+13)+'" text-anchor="middle" font-size="8" fill="#999">중위</text>';
+  svg+='<text x="'+(bx+bw*.875)+'" y="'+(by+bh+13)+'" text-anchor="middle" font-size="8" fill="#999">상위</text>';
+  svg+='<text x="'+W/2+'" y="22" text-anchor="middle" font-size="13" font-weight="900" fill="'+v.col+'">'+v.text+'</text>';
+  svg+='<text x="'+W/2+'" y="34" text-anchor="middle" font-size="9" fill="#868e96">업계 기준 '+Math.round(pct)+'% 구간</text>';
+  svg+='</svg>';
+  return svg;
+}
+
+// ── 보고서용 비용 대결 SVG ──
+function buildReportCostSvg(tr,at,diff){
+  var W=240,H=100;
+  var max=Math.max(tr,at,1);
+  var rw=Math.round((W-80)*tr/max);
+  var aw=Math.round((W-80)*at/max);
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;display:block;font-family:\'Malgun Gothic\',sans-serif;">';
+  // 인상 비용 바
+  svg+='<text x="8" y="22" font-size="9" fill="#4361ee" font-weight="700">인상</text>';
+  svg+='<rect x="44" y="10" width="'+rw+'" height="16" rx="5" fill="#4361ee" opacity=".85"/>';
+  svg+='<text x="'+(44+rw+4)+'" y="22" font-size="9" fill="#4361ee" font-weight="700">'+fmtM(tr)+'</text>';
+  // 이탈 비용 바
+  svg+='<text x="8" y="52" font-size="9" fill="#c92a2a" font-weight="700">이탈</text>';
+  svg+='<rect x="44" y="40" width="'+aw+'" height="16" rx="5" fill="#c92a2a" opacity=".85"/>';
+  svg+='<text x="'+(44+aw+4)+'" y="52" font-size="9" fill="#c92a2a" font-weight="700">'+fmtM(at)+'</text>';
+  // 차이
+  var dCol=diff>0?'#2b8a3e':'#c92a2a';
+  svg+='<rect x="8" y="68" width="'+(W-16)+'" height="26" rx="8" fill="'+(diff>0?'#ebfbee':'#fff5f5')+'"/>';
+  svg+='<text x="'+W/2+'" y="85" text-anchor="middle" font-size="12" font-weight="900" fill="'+dCol+'">'+(diff>0?'절감 ':'초과 ')+(diff>0?'+':'')+fmtM(diff)+'만원</text>';
+  svg+='</svg>';
+  return svg;
+}
+
+// ── 보고서용 시나리오 표 ──
+function buildReportScenario(sal,d){
+  var rates=[3,5,7,10];
+  var html='<table style="width:100%;border-collapse:collapse;font-size:10px;">';
+  html+='<tr style="background:#f8f9fa;"><th style="padding:5px 6px;text-align:left;font-weight:700;color:#495057;">인상률</th><th style="padding:5px 6px;text-align:right;">인상 후 연봉</th><th style="padding:5px 6px;text-align:center;">포지션</th></tr>';
+  rates.forEach(function(r){
+    var ns=Math.round(sal*(1+r/100));
+    var np=calcPosPercent(ns,d);
+    var nv=posVerdict(np);
+    var isActive=(r===5);
+    html+='<tr style="border-bottom:1px solid #f1f3f5;'+(isActive?'background:#f0f3ff;':'')+'">';
+    html+='<td style="padding:6px 6px;font-weight:'+(isActive?'800':'600')+';color:'+(isActive?'#4361ee':'#495057')+';">'+r+'%'+(isActive?' ★':'')+'</td>';
+    html+='<td style="padding:6px 6px;text-align:right;font-weight:700;">'+fmtM(ns)+'만</td>';
+    html+='<td style="padding:6px 6px;text-align:center;"><span style="background:'+nv.bg+';color:'+nv.col+';font-size:9px;font-weight:700;padding:2px 7px;border-radius:5px;">'+nv.text+'</span></td>';
+    html+='</tr>';
+  });
+  html+='</table>';
+  return html;
 }
 
 /* ======================================================
@@ -1655,7 +1854,7 @@ function buildReport(){
 ====================================================== */
 initOptionalItems();
 if(employees.length===0){addEmployee();}
-toggleExceptionMode();
+updateInsuranceModeNote();
 calcPos();
 previewRaise(parseFloat(document.getElementById('raise_rate').value)||5);
 calcIns();
