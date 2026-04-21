@@ -1817,6 +1817,134 @@ function renderTotalSummary(curRate){
 ============================================================ */
 function buildReportBarChart(settledList){ return ''; }
 
+
+function buildGroupRaiseSummary(settledList,totalExtra){
+  if(!settledList || !settledList.length) return '';
+  var groups={};
+  settledList.forEach(function(entry){
+    var id=entry[0], e=entry[1];
+    var rate=selectedRates[id];
+    var rd=getRD(e.sal,rate);
+    var key=e.ind+'__'+e.jt;
+    if(!groups[key]){
+      groups[key]={
+        ind:e.ind,
+        jt:e.jt,
+        count:0,
+        before:0,
+        after:0,
+        direct:0,
+        insurance:0,
+        retirement:0,
+        total:0,
+        rateSum:0,
+        selectedCount:0
+      };
+    }
+    groups[key].count+=1;
+    groups[key].before+=e.sal;
+    groups[key].after+=e.sal+rd.direct;
+    groups[key].direct+=rd.direct;
+    groups[key].insurance+=rd.insurance;
+    groups[key].retirement+=rd.retirement;
+    groups[key].total+=rd.total;
+    groups[key].rateSum+=rate;
+    groups[key].selectedCount+=1;
+  });
+
+  var rows=Object.keys(groups).map(function(key){
+    var g=groups[key];
+    g.avgRate=g.selectedCount?g.rateSum/g.selectedCount:0;
+    g.salaryRate=g.before?((g.after-g.before)/g.before*100):0;
+    g.share=totalExtra>0?(g.total/totalExtra*100):0;
+    return g;
+  }).sort(function(a,b){return b.total-a.total;});
+
+  var top=rows[0];
+  var totalSelected=rows.reduce(function(s,g){return s+g.count;},0);
+  var html=''
+    +'<div style="background:#ffffff;border:1.5px solid #e5e7eb;border-radius:14px;padding:20px;margin-bottom:18px;">'
+      +'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;">'
+        +'<div>'
+          +'<div style="font-size:14px;font-weight:800;color:#1e2a3a;margin-bottom:4px;">📊 직종·직군별 인상 요약</div>'
+          +'<div style="font-size:11px;color:#6b7280;line-height:1.7;">인상안이 선택된 직원만 기준으로 업종·직군 단위 총 증가분과 평균 인상률을 집계했습니다.</div>'
+        +'</div>'
+        +'<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;min-width:220px;">'
+          +'<div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:4px;text-transform:uppercase;">최대 증가 그룹</div>'
+          +'<div style="font-size:13px;font-weight:800;color:#1e2a3a;">'+IND_LABEL[top.ind]+' · '+JT_LABEL[top.jt]+'</div>'
+          +'<div style="font-size:11px;color:#ef4444;font-weight:700;margin-top:3px;">+'+fmtMW(top.total)+'</div>'
+          +'<div style="font-size:10px;color:#9ca3af;margin-top:2px;">선택 '+top.count+'명 · 전체 증가분의 '+top.share.toFixed(1)+'%</div>'
+        +'</div>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;">'
+        +'<div style="background:#f0f4ff;border:1px solid #dbeafe;border-radius:10px;padding:12px;text-align:center;">'
+          +'<div style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:5px;">집계 그룹 수</div>'
+          +'<div style="font-size:18px;font-weight:800;color:#4361ee;">'+rows.length+'개</div>'
+          +'<div style="font-size:10px;color:#9ca3af;margin-top:3px;">업종·직군 조합</div>'
+        +'</div>'
+        +'<div style="background:#f0fbf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px;text-align:center;">'
+          +'<div style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:5px;">선택 직원 수</div>'
+          +'<div style="font-size:18px;font-weight:800;color:#15803d;">'+totalSelected+'명</div>'
+          +'<div style="font-size:10px;color:#9ca3af;margin-top:3px;">인상안 확정 대상</div>'
+        +'</div>'
+        +'<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px;text-align:center;">'
+          +'<div style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:5px;">평균 인상률</div>'
+          +'<div style="font-size:18px;font-weight:800;color:#e65100;">'+(totalSelected?((rows.reduce(function(s,g){return s+g.rateSum;},0))/totalSelected).toFixed(1):'0.0')+'%</div>'
+          +'<div style="font-size:10px;color:#9ca3af;margin-top:3px;">선택 직원 평균</div>'
+        +'</div>'
+      +'</div>'
+      +'<div style="overflow-x:auto;border:1px solid #e5e7eb;border-radius:12px;">'
+        +'<table style="width:100%;border-collapse:collapse;font-size:11px;min-width:900px;">'
+          +'<thead>'
+            +'<tr style="background:#f8fafc;color:#6b7280;">'
+              +'<th style="padding:10px 12px;text-align:left;border-bottom:1px solid #e5e7eb;">업종</th>'
+              +'<th style="padding:10px 12px;text-align:left;border-bottom:1px solid #e5e7eb;">직군</th>'
+              +'<th style="padding:10px 12px;text-align:right;border-bottom:1px solid #e5e7eb;">선택 인원</th>'
+              +'<th style="padding:10px 12px;text-align:right;border-bottom:1px solid #e5e7eb;">평균 인상률</th>'
+              +'<th style="padding:10px 12px;text-align:right;border-bottom:1px solid #e5e7eb;">전년 연봉 합계</th>'
+              +'<th style="padding:10px 12px;text-align:right;border-bottom:1px solid #e5e7eb;">협상 연봉 합계</th>'
+              +'<th style="padding:10px 12px;text-align:right;border-bottom:1px solid #e5e7eb;">총 증가분</th>'
+              +'<th style="padding:10px 12px;text-align:right;border-bottom:1px solid #e5e7eb;">직접 인상액</th>'
+              +'<th style="padding:10px 12px;text-align:right;border-bottom:1px solid #e5e7eb;">보험료 증가</th>'
+              +'<th style="padding:10px 12px;text-align:right;border-bottom:1px solid #e5e7eb;">퇴직금 증가</th>'
+              +'<th style="padding:10px 12px;text-align:right;border-bottom:1px solid #e5e7eb;">전체 비중</th>'
+            +'</tr>'
+          +'</thead>'
+          +'<tbody>'
+            +rows.map(function(g,idx){
+              return '<tr style="background:'+(idx%2===0?'#ffffff':'#fcfcfd')+';">'
+                +'<td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;font-weight:700;color:#1e2a3a;">'+IND_LABEL[g.ind]+'</td>'
+                +'<td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;color:#374151;">'+JT_LABEL[g.jt]+'</td>'
+                +'<td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;text-align:right;">'+g.count+'명</td>'
+                +'<td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:700;color:#e67700;">'+g.avgRate.toFixed(1)+'%</td>'
+                +'<td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;text-align:right;">'+fmtMW(g.before)+'</td>'
+                +'<td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;text-align:right;">'+fmtMW(g.after)+'</td>'
+                +'<td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:800;color:#dc2626;">+'+fmtMW(g.total)+'</td>'
+                +'<td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;text-align:right;color:#4361ee;">+'+fmtMW(g.direct)+'</td>'
+                +'<td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;text-align:right;color:#ef4444;">+'+fmtMW(g.insurance)+'</td>'
+                +'<td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;text-align:right;color:#f97316;">+'+fmtMW(g.retirement)+'</td>'
+                +'<td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:700;">'+g.share.toFixed(1)+'%</td>'
+              +'</tr>';
+            }).join('')
+            +'<tr style="background:#f8fafc;">'
+              +'<td colspan="2" style="padding:11px 12px;border-top:2px solid #cbd5e1;font-weight:800;color:#1e2a3a;">합계</td>'
+              +'<td style="padding:11px 12px;border-top:2px solid #cbd5e1;text-align:right;font-weight:800;">'+totalSelected+'명</td>'
+              +'<td style="padding:11px 12px;border-top:2px solid #cbd5e1;text-align:right;font-weight:800;color:#e67700;">'+(totalSelected?((rows.reduce(function(s,g){return s+g.rateSum;},0))/totalSelected).toFixed(1):'0.0')+'%</td>'
+              +'<td style="padding:11px 12px;border-top:2px solid #cbd5e1;text-align:right;font-weight:800;">'+fmtMW(rows.reduce(function(s,g){return s+g.before;},0))+'</td>'
+              +'<td style="padding:11px 12px;border-top:2px solid #cbd5e1;text-align:right;font-weight:800;">'+fmtMW(rows.reduce(function(s,g){return s+g.after;},0))+'</td>'
+              +'<td style="padding:11px 12px;border-top:2px solid #cbd5e1;text-align:right;font-weight:800;color:#dc2626;">+'+fmtMW(rows.reduce(function(s,g){return s+g.total;},0))+'</td>'
+              +'<td style="padding:11px 12px;border-top:2px solid #cbd5e1;text-align:right;font-weight:800;color:#4361ee;">+'+fmtMW(rows.reduce(function(s,g){return s+g.direct;},0))+'</td>'
+              +'<td style="padding:11px 12px;border-top:2px solid #cbd5e1;text-align:right;font-weight:800;color:#ef4444;">+'+fmtMW(rows.reduce(function(s,g){return s+g.insurance;},0))+'</td>'
+              +'<td style="padding:11px 12px;border-top:2px solid #cbd5e1;text-align:right;font-weight:800;color:#f97316;">+'+fmtMW(rows.reduce(function(s,g){return s+g.retirement;},0))+'</td>'
+              +'<td style="padding:11px 12px;border-top:2px solid #cbd5e1;text-align:right;font-weight:800;">100.0%</td>'
+            +'</tr>'
+          +'</tbody>'
+        +'</table>'
+      +'</div>'
+    +'</div>';
+  return html;
+}
+
 /* ── 이탈비용 가로 바 차트 (직원 카드용) ── */
 function buildAttrBar(attrTotal, rd){
   if(!attrTotal) return '<div style="font-size:11px;color:#9ca3af;padding:8px 0;">④ 이탈 비용을 입력하면 표시됩니다.</div>';
@@ -2131,6 +2259,7 @@ function buildReport(){
           +'<div style="background:#f1f5f9;border-radius:4px;height:8px;"><div style="width:'+pct+'%;background:'+it.c+';height:8px;border-radius:4px;"></div></div></div>';
       }).join('')
     +'</div>'
+    +buildGroupRaiseSummary(settledList,totalExtra)
     +empCards
     +'</div>'
     +'<button onclick="printReport()" style="display:inline-flex;align-items:center;gap:7px;padding:10px 22px;border:none;border-radius:10px;background:#1e2a3a;color:#fff;font-weight:700;font-size:13px;cursor:pointer;margin-top:8px;">📄 보고서 PDF 저장</button>'
