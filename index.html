@@ -534,8 +534,8 @@ input:focus,select:focus{border-color:#4361ee;box-shadow:0 0 0 3px rgba(67,97,23
    상수
 ============================================================ */
 var MIN_2025 = 9860*209*12;   // 24,728,880
-var MIN_2026 = 10030*209*12;  // 25,155,240
-var MIN_2026M = 10030*209;    // 2,096,270
+var MIN_2026 = 10320*209*12;  // 25,882,560
+var MIN_2026M = 10320*209;    // 2,156,880
 
 /* ── 4대보험 요율 (연도별) ── */
 var INS_RATE = {
@@ -788,7 +788,7 @@ function showMWAlert(sal){
     var minRate=Math.ceil(gap/sal*1000)/10;
     title.textContent='⚠️ 2026년 최저임금 미달 — 즉시 인상 필요';
     desc.innerHTML='현재 연봉 <strong>'+fmtMW(sal)+'</strong>은 2026년 법정 최저연봉 <strong>'+fmtMW(MIN_2026)+'</strong>에 미달합니다.<br>최소 <strong>'+fmtMW(gap)+' ('+minRate+'% 이상)</strong> 인상이 법적으로 필요합니다.';
-    minEl.textContent='2026 최저임금: 시급 10,030원 · 월 '+fmt(MIN_2026M)+'원 · 연 '+fmt(MIN_2026)+'원';
+    minEl.textContent='2026 최저임금: 시급 10,320원 · 월 '+fmt(MIN_2026M)+'원 · 연 '+fmt(MIN_2026)+'원';
   } else {
     el.className='mw-alert';
     el.style.background='';
